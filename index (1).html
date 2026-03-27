@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BioReport">
+<title>Daily Bio-monitoring Report</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+:root {
+  --forest: #1e3d1a;
+  --moss: #2d5a27;
+  --sage: #5c8a4e;
+  --mist: #a8c4a0;
+  --paper: #f5f2eb;
+  --cream: #faf8f3;
+  --ink: #1a1a14;
+  --stone: #6b6b5e;
+  --amber: #c8832a;
+  --amber-light: #f5e6c8;
+  --red: #8b2a2a;
+  --red-light: #f5e0e0;
+  --blue: #2d5d8a;
+  --blue-light: #e6f0f8;
+  --border: #d4cfc2;
+  --shadow: rgba(30,61,26,0.12);
+  --section-gap: 1rem;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--forest);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+}
+button, input, textarea, select { font: inherit; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--forest);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 2px solid var(--moss);
+  flex-wrap: wrap;
+}
+.topbar-title-wrap { min-width: 0; flex: 1; }
+.topbar-title {
+  color: var(--mist);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-subtitle {
+  color: rgba(255,255,255,0.78);
+  font-size: 0.72rem;
+  margin-top: 0.1rem;
+}
+.topbar-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primary { background: var(--sage); color: white; }
+.btn-primary:hover { background: var(--moss); }
+.btn-export { background: var(--amber); color: white; }
+.btn-export:hover { background: #a06820; }
+.btn-save { background: var(--moss); color: var(--mist); }
+.btn-save:hover { background: var(--sage); }
+.btn-secondary { background: var(--blue); color: white; }
+.btn-secondary:hover { background: #22486b; }
+.btn-light { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.14); }
+.btn-light:hover { background: rgba(255,255,255,0.18); }
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.22rem 0.5rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.offline-badge { display: none; background: var(--amber); color: white; }
+.offline-badge.show { display: inline-flex; }
+.autosave-badge { background: rgba(255,255,255,0.12); color: white; }
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+.section-card {
+  background: var(--cream);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.section-header {
+  background: var(--moss);
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.section-header h2 {
+  color: white;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  flex: 1;
+}
+.section-header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.section-icon { font-size: 1rem; }
+.section-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.85rem; }
+.help-text { font-size: 0.8rem; color: var(--stone); line-height: 1.45; }
+.microcopy { font-size: 0.72rem; color: var(--stone); }
+.kicker { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); font-weight: 700; }
+
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.field-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+@media (max-width: 700px) {
+  .field-row, .field-row-3 { grid-template-columns: 1fr; }
+  .topbar { align-items: flex-start; }
+}
+
+label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--stone);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+label .required { color: var(--red); margin-left: 2px; }
+
+input[type="text"], input[type="date"], input[type="time"], input[type="number"],
+textarea, select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--paper);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px rgba(92,138,78,0.15);
+  background: white;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b5e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
+input[readonly] { color: var(--stone); }
+
+.toolbar-card {
+  background: var(--blue-light);
+  border: 1px solid #c9dcec;
+  border-radius: 8px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.toolbar-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.toolbar-select {
+  min-width: 240px;
+  max-width: 100%;
+}
+
+.yn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.yn-btn {
+  padding: 0.45rem 1.1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--paper);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--stone);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.yn-btn.active-yes { background: #e8f5e4; border-color: var(--sage); color: var(--moss); }
+.yn-btn.active-no { background: var(--red-light); border-color: var(--red); color: var(--red); }
+.yn-btn.active-na { background: var(--amber-light); border-color: var(--amber); color: #7a4e10; }
+
+.repeat-container { display: flex; flex-direction: column; gap: 0.75rem; }
+.repeat-item {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.repeat-item-header {
+  background: var(--mist);
+  padding: 0.45rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.repeat-item-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--forest);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.repeat-item-actions { display: flex; gap: 0.4rem; }
+.repeat-item-body { padding: 0.8rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.repeat-empty {
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  padding: 0.85rem;
+  color: var(--stone);
+  text-align: center;
+  background: rgba(255,255,255,0.55);
+  font-size: 0.85rem;
+}
+
+.btn-remove,
+.btn-duplicate-inline {
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.28rem 0.45rem;
+  border-radius: 6px;
+  font-weight: 700;
+}
+.btn-remove { background: rgba(139,42,42,0.12); color: var(--red); }
+.btn-duplicate-inline { background: rgba(45,93,138,0.12); color: var(--blue); }
+.btn-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem;
+  border: 2px dashed var(--sage);
+  border-radius: 8px;
+  background: rgba(92,138,78,0.05);
+  color: var(--sage);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+}
+.btn-add:hover { background: rgba(92,138,78,0.12); border-color: var(--moss); color: var(--moss); }
+
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
+.photo-slot {
+  position: relative;
+  background: var(--paper);
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+.photo-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-slot .photo-label-input {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(30,61,26,0.78);
+  border: none;
+  border-radius: 0;
+  color: white;
+  font-size: 0.74rem;
+  padding: 0.3rem 0.45rem;
+}
+.photo-slot .photo-label-input::placeholder { color: rgba(255,255,255,0.65); }
+.photo-slot .photo-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(139,42,42,0.88);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 0.8rem;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.photo-upload-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  color: var(--stone);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.5rem;
+  aspect-ratio: 4 / 3;
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.photo-upload-icon { font-size: 1.8rem; }
+input[type="file"] { display: none; }
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--forest);
+  color: var(--mist);
+  padding: 0.65rem 1.15rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  transition: transform 0.3s;
+  z-index: 200;
+  max-width: calc(100vw - 2rem);
+  text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@media print {
+  body { background: white; font-size: 11pt; }
+  .topbar, .toolbar-card, .btn, .btn-add, .btn-remove, .btn-duplicate-inline, .photo-upload-btn, .yn-btn:not(.active-yes):not(.active-no):not(.active-na) { display: none !important; }
+  .container { max-width: 100%; padding: 0; gap: 1rem; }
+  .section-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+  .section-header { background: #2d5a27 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .repeat-item { border: 1px solid #ccc; }
+  .repeat-item-header { background: #a8c4a0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  input, textarea, select { border: 1px solid #ccc !important; padding: 0.3rem !important; }
+  .photo-slot { aspect-ratio: 4 / 3; }
+  .photo-slot .photo-remove { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title-wrap">
+    <div class="topbar-title">🌿 Bio-monitoring Report</div>
+    <div class="topbar-subtitle" id="draftStatus">Unsaved draft</div>
+  </div>
+  <div class="status-row">
+    <span class="badge offline-badge" id="offlineBadge">Offline</span>
+    <span class="badge autosave-badge" id="autosaveBadge">Autosave on</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-save" onclick="saveCurrentDraft()">💾 Save</button>
+    <button class="btn btn-secondary" onclick="duplicateForToday()">🗂 Copy for Today</button>
+    <button class="btn btn-export" onclick="exportPDF()">📄 PDF</button>
+  </div>
+</div>
+
+<div class="container" id="mainForm">
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🧰</span><h2>Report Tools</h2></div>
+    <div class="section-body">
+      <div class="toolbar-card">
+        <div class="kicker">Field workflow helper</div>
+        <p class="help-text">Use a saved report from yesterday as the starting point for today. Project details, location, contractor information, and recurring site notes can carry forward, then staff can update only the daily observations.</p>
+        <div class="toolbar-row">
+          <select id="draftPicker" class="toolbar-select"></select>
+          <button class="btn btn-primary" onclick="loadSelectedDraft()">Open Saved Draft</button>
+          <button class="btn btn-light" onclick="saveAsNewDraft()">Save as New Copy</button>
+        </div>
+        <div class="toolbar-row">
+          <button class="btn btn-light" onclick="duplicateForToday()">Duplicate Selected Draft for Today</button>
+          <button class="btn btn-light" onclick="clearDailyFields()">Clear Daily Fields Only</button>
+          <button class="btn btn-light" onclick="deleteSelectedDraft()">Delete Saved Draft</button>
+        </div>
+        <div class="toolbar-row">
+          <button class="btn btn-light" onclick="exportJsonBackup()">Export Backup</button>
+          <button class="btn btn-light" onclick="document.getElementById('importInput').click()">Import Backup</button>
+          <input type="file" id="importInput" accept="application/json" onchange="importJsonBackup(event)">
+        </div>
+        <div class="microcopy">Saved drafts stay on the device in offline storage. This prototype is designed for phone use after the app has been opened once while connected.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">📋</span><h2>Report Header</h2></div>
+    <div class="section-body">
+      <div class="field-row-3">
+        <div class="field">
+          <label>Draft / Report Name</label>
+          <input type="text" id="draftName" placeholder="e.g. Yankee Jims 2026-03-24" />
+        </div>
+        <div class="field">
+          <label>Date <span class="required">*</span></label>
+          <input type="date" id="date" />
+        </div>
+        <div class="field">
+          <label>Day of Week</label>
+          <select id="dayOfWeek">
+            <option value="">— Select —</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Project Name & Number</label>
+        <input type="text" id="projectName" value="7th Street Bridge Replacement (Federal Project No. BRLS-5938 (167))" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Name of Bio-monitor(s)</label>
+          <input type="text" id="biomonitor" />
+        </div>
+        <div class="field">
+          <label>Map # (if applicable)</label>
+          <input type="text" id="mapNum" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="location" value="7th Street Bridge over the Tuolumne River in Modesto, roughly 0.5 miles east of Highway 99" />
+      </div>
+      <div class="field">
+        <label>Location Description</label>
+        <input type="text" id="locationDesc" value="Bridge over the Tuolumne River surrounded by riparian vegetation and an urban park" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🔭</span><h2>Bio-monitoring Activity</h2></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Start Time</label>
+          <input type="time" id="actStart" value="07:00" />
+        </div>
+        <div class="field">
+          <label>End Time</label>
+          <input type="time" id="actEnd" value="15:00" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Bio-monitoring Notes</label>
+        <textarea id="actNotes" placeholder="Enter notes…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🌤</span><h2>Weather Conditions</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Conditions</label>
+        <select id="weatherCond">
+          <option value="">— Select —</option>
+          <option>Clear / Sunny</option><option>Partly Cloudy</option><option>Overcast</option>
+          <option>Foggy</option><option>Light Rain</option><option>Heavy Rain</option>
+          <option>Windy</option><option>Hot</option>
+        </select>
+      </div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>Temperature (°F)</label>
+          <input type="number" id="temp" placeholder="e.g. 72" />
+        </div>
+        <div class="field">
+          <label>Humidity (%)</label>
+          <input type="number" id="humidity" placeholder="e.g. 45" />
+        </div>
+        <div class="field">
+          <label>Wind (mph)</label>
+          <input type="number" id="wind" placeholder="e.g. 10" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Cloud Cover</label>
+        <select id="clouds">
+          <option value="">— Select —</option>
+          <option>0–10%</option><option>10–25%</option><option>25–50%</option>
+          <option>50–75%</option><option>75–100%</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🏗</span><h2>Construction Activity</h2></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Contractor(s) Performing Work</label>
+          <input type="text" id="contractor" />
+        </div>
+        <div class="field">
+          <label>Person(s) in Charge</label>
+          <input type="text" id="personInCharge" placeholder="First Last (Title)" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Start Time</label>
+          <input type="time" id="constStart" value="07:00" />
+        </div>
+        <div class="field">
+          <label>End Time</label>
+          <input type="time" id="constEnd" value="15:30" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Work compliant with applicable permits?</label>
+        <div class="yn-group" id="yn-compliant">
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-compliant','Yes',this)">Yes</button>
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-compliant','No',this)">No</button>
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-compliant','N/A',this)">N/A</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Construction Activities / Equipment Used</label>
+        <textarea id="constActivities" placeholder="Describe activities and equipment…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🦎</span><h2>Biological Resources</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Special status / regulated species observed?</label>
+        <div class="yn-group" id="yn-speciesObs">
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-speciesObs','Yes',this)">Yes</button>
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-speciesObs','No',this)">No</button>
+        </div>
+      </div>
+      <div id="species-repeat-container" class="repeat-container"></div>
+      <button class="btn-add" type="button" onclick="addRepeatItem('species')">＋ Add Species Observation</button>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">⚠️</span><h2>Special Status / Regulated Species Take</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>"Take" of special status / regulated species occur?</label>
+        <div class="yn-group" id="yn-take">
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-take','Yes',this)">Yes</button>
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-take','No',this)">No</button>
+        </div>
+      </div>
+      <div id="take-repeat-container" class="repeat-container"></div>
+      <button class="btn-add" type="button" onclick="addRepeatItem('take')">＋ Add Take Incident</button>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🦇</span><h2>Roosting Bats</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Roosting bat habitat present within or near project area?</label>
+        <div class="yn-group" id="yn-batHabitat">
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-batHabitat','Yes',this)">Yes</button>
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-batHabitat','No',this)">No</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Project's Bat Maternity Season</label>
+        <input type="text" id="batSeason" value="April 1 – August 31" readonly />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Roosting bats or signs observed?</label>
+          <div class="yn-group" id="yn-batsObs">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-batsObs','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-batsObs','No',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Bat maternity colonies present?</label>
+          <div class="yn-group" id="yn-maternity">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-maternity','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-maternity','No',this)">No</button>
+          </div>
+        </div>
+      </div>
+      <div id="bat-repeat-container" class="repeat-container"></div>
+      <button class="btn-add" type="button" onclick="addRepeatItem('bat')">＋ Add Roost Site</button>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🪺</span><h2>Nest Findings</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Project's Active Nesting Bird Season</label>
+        <input type="text" id="nestSeason" value="February 1 – August 31" readonly />
+      </div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>Bird nests observed on or near site?</label>
+          <div class="yn-group" id="yn-nestsObs">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-nestsObs','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-nestsObs','No',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Nesting behaviors observed?</label>
+          <div class="yn-group" id="yn-nestBehav">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-nestBehav','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-nestBehav','No',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Active native bird nests observed?</label>
+          <div class="yn-group" id="yn-activeNests">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-activeNests','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-activeNests','No',this)">No</button>
+          </div>
+        </div>
+      </div>
+      <div id="nest-repeat-container" class="repeat-container"></div>
+      <button class="btn-add" type="button" onclick="addRepeatItem('nest')">＋ Add Nest Finding</button>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🗑</span><h2>Nest Removals</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Were any nests removed?</label>
+        <div class="yn-group" id="yn-nestsRemoved">
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-nestsRemoved','Yes',this)">Yes</button>
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-nestsRemoved','No',this)">No</button>
+        </div>
+      </div>
+      <div id="removal-repeat-container" class="repeat-container"></div>
+      <button class="btn-add" type="button" onclick="addRepeatItem('removal')">＋ Add Nest Removal</button>
+      <div class="field">
+        <label>Additional Notes</label>
+        <textarea id="removalNotes" placeholder="e.g. No nests were removed today, however inspection and removal of old mud nests will be required…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">💧</span><h2>Wetlands & Jurisdictional Waters</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Wetlands or jurisdictional waters present on or near site?</label>
+        <div class="yn-group" id="yn-wetlands">
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-wetlands','Yes',this)">Yes</button>
+          <button class="yn-btn" type="button" onclick="toggleYN('yn-wetlands','No',this)">No</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Water Body Name(s)</label>
+          <input type="text" id="waterBody" value="Tuolumne River" />
+        </div>
+        <div class="field">
+          <label>Name of Watershed</label>
+          <input type="text" id="watershed" value="San Joaquin River Basin" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Wetlands/waters impacted by project work?</label>
+          <div class="yn-group" id="yn-wetImpact">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-wetImpact','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-wetImpact','No',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Impacts outside scope of designed project work?</label>
+          <div class="yn-group" id="yn-wetOutScope">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-wetOutScope','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-wetOutScope','No',this)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Type of impact(s) (if applicable)</label>
+        <input type="text" id="wetImpactType" />
+      </div>
+      <div class="field">
+        <label>Bio-monitor Notes</label>
+        <textarea id="wetNotes"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🌱</span><h2>Vegetation Impacts</h2></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Vegetation impacted by project work activity?</label>
+          <div class="yn-group" id="yn-vegImpact">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-vegImpact','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-vegImpact','No',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Impacts outside scope of designed project work?</label>
+          <div class="yn-group" id="yn-vegOutScope">
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-vegOutScope','Yes',this)">Yes</button>
+            <button class="yn-btn" type="button" onclick="toggleYN('yn-vegOutScope','No',this)">No</button>
+          </div>
+        </div>
+      </div>
+      <div id="veg-repeat-container" class="repeat-container"></div>
+      <button class="btn-add" type="button" onclick="addRepeatItem('veg')">＋ Add Vegetation Impact Area</button>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🐦</span><h2>Non-Special Status Species</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Birds</label>
+        <textarea id="nssBirds" placeholder="Common name (Scientific name), …" style="min-height:80px;"></textarea>
+      </div>
+      <div class="field">
+        <label>Fish</label>
+        <textarea id="nssFish" placeholder="None or list species…" style="min-height:50px;"></textarea>
+      </div>
+      <div class="field">
+        <label>Herpetofauna</label>
+        <textarea id="nssHerp" placeholder="None or list species…" style="min-height:50px;"></textarea>
+      </div>
+      <div class="field">
+        <label>Large Invertebrates</label>
+        <textarea id="nssInvert" placeholder="None or list species…" style="min-height:50px;"></textarea>
+      </div>
+      <div class="field">
+        <label>Mammals</label>
+        <textarea id="nssMamm" placeholder="None or list species…" style="min-height:50px;"></textarea>
+      </div>
+      <div class="field">
+        <label>Bio-monitor Notes</label>
+        <textarea id="nssNotes"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">📷</span><h2>Photos</h2></div>
+    <div class="section-body">
+      <p class="help-text">Photos display in a default 4:3 frame. Staff can add photos from the phone and adjust later if needed in the exported PDF workflow.</p>
+      <div class="photo-grid" id="photoGrid"></div>
+      <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotoUpload(event)" />
+      <button class="btn-add" type="button" onclick="document.getElementById('photoInput').click()">📷 Add Photo(s)</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB_NAME = 'bioreport-db';
+const DB_VERSION = 1;
+const STORE_NAME = 'drafts';
+const META_STORE = 'meta';
+const AUTOSAVE_ID = '__autosave_current__';
+let dbPromise = null;
+let currentDraftId = AUTOSAVE_ID;
+let currentDraftName = 'Current draft';
+let autosaveTimer = null;
+let toastTimer = null;
+const ynValues = {};
+let photos = [];
+const repeatCounters = {};
+const repeatTypes = ['species', 'take', 'bat', 'nest', 'removal', 'veg'];
+
+const repeatTemplates = {
+  species: {
+    label: 'Species Observation',
+    fields: [
+      { type: 'time', id: 'time', label: 'Time(s) of Observation' },
+      { type: 'text', id: 'name', label: 'Species Common / Scientific Name' },
+      { type: 'text', id: 'gps', label: 'GPS Location (if applicable)' },
+      { type: 'text', id: 'locDesc', label: 'Location Description' },
+      { type: 'yn', id: 'impacted', label: 'Species impacted due to work?' },
+      { type: 'yn', id: 'outScope', label: 'Impacts outside scope of designed project work?' },
+      { type: 'textarea', id: 'notes', label: 'Bio-monitor Notes' },
+    ]
+  },
+  take: {
+    label: 'Take Incident',
+    fields: [
+      { type: 'text', id: 'name', label: 'Species Common / Scientific Name' },
+      { type: 'text', id: 'takeType', label: 'What type of take occurred?' },
+      { type: 'yn', id: 'dueToWork', label: 'Take occur due to project work activity?' },
+      { type: 'yn', id: 'outScope', label: 'Take occur outside scope of project permit(s)?' },
+      { type: 'time', id: 'time', label: 'Time' },
+      { type: 'select', id: 'ageClass', label: 'Age / Class', options: ['— Select —','Adult','Sub-adult','Juvenile','Egg / Larva','Unknown'] },
+      { type: 'select', id: 'sex', label: 'Sex', options: ['— Select —','Male','Female','Unknown'] },
+      { type: 'text', id: 'gps', label: 'GPS Location of Take' },
+      { type: 'text', id: 'locDesc', label: 'Description of Location of Take' },
+      { type: 'textarea', id: 'notes', label: 'Bio-monitor Notes' },
+    ]
+  },
+  bat: {
+    label: 'Roost Site',
+    fields: [
+      { type: 'time', id: 'time', label: 'Time(s) of Observation' },
+      { type: 'text', id: 'name', label: 'Species Common / Scientific Name (if identifiable)' },
+      { type: 'text', id: 'gps', label: 'GPS Location' },
+      { type: 'select', id: 'roostType', label: 'Type of Roost', options: ['— Select —','Day Roost','Night Roost','Maternity Roost','Wintering Roost'] },
+      { type: 'text', id: 'locDesc', label: 'Description of Roost Location' },
+      { type: 'yn', id: 'impacted', label: 'Roost negatively impacted by project activity?' },
+      { type: 'textarea', id: 'notes', label: 'Bio-monitor Notes' },
+    ]
+  },
+  nest: {
+    label: 'Nest Finding',
+    fields: [
+      { type: 'time', id: 'time', label: 'Time(s) of Observation' },
+      { type: 'select', id: 'active', label: 'Nest / Colony Active or Non-active?', options: ['— Select —','Active','Non-active'] },
+      { type: 'select', id: 'status', label: 'Nesting Status', options: ['— Select —','Building','Incubating','Nestlings Present','Fledglings Present','Empty / Abandoned'] },
+      { type: 'yn', id: 'impacted', label: 'Species impacted due to work?' },
+      { type: 'yn', id: 'outScope', label: 'Impacts outside scope of designed project work?' },
+      { type: 'text', id: 'name', label: 'Species Common / Scientific Name' },
+      { type: 'text', id: 'gps', label: 'GPS Location (if applicable)' },
+      { type: 'text', id: 'locDesc', label: 'Location Description' },
+      { type: 'textarea', id: 'notes', label: 'Bio-monitor Notes' },
+    ]
+  },
+  removal: {
+    label: 'Nest Removal',
+    fields: [
+      { type: 'text', id: 'name', label: 'Species Common / Scientific Name' },
+      { type: 'select', id: 'active', label: 'Was nest active or non-active?', options: ['— Select —','Active','Non-active'] },
+      { type: 'select', id: 'status', label: 'Nesting Status', options: ['— Select —','Building','Incubating','Nestlings Present','Fledglings Present','Empty / Abandoned'] },
+      { type: 'text', id: 'locDesc', label: 'Location Description' },
+      { type: 'text', id: 'gps', label: 'GPS Location' },
+      { type: 'textarea', id: 'notes', label: 'Bio-monitor Notes' },
+    ]
+  },
+  veg: {
+    label: 'Vegetation Impact Area',
+    fields: [
+      { type: 'text', id: 'habitatType', label: 'Habitat Type' },
+      { type: 'text', id: 'vegType', label: 'Type of Vegetation Impacted' },
+      { type: 'select', id: 'tempPerm', label: 'Was impact temporary or permanent?', options: ['— Select —','Temporary','Permanent'] },
+      { type: 'textarea', id: 'desc', label: 'Description of Impact(s)' },
+      { type: 'text', id: 'sqft', label: 'Square Footage of Impacted Area' },
+      { type: 'text', id: 'gps', label: 'GPS Location' },
+      { type: 'textarea', id: 'notes', label: 'Bio-monitor Notes' },
+    ]
+  }
+};
+
+function defaultDateString() {
+  return new Date().toISOString().split('T')[0];
+}
+function dayNameFromDate(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString + 'T12:00:00');
+  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+}
+function sanitizeFileName(value) {
+  return (value || 'biomonitoring-report').replace(/[^a-z0-9\-_]+/gi, '_').replace(/^_+|_+$/g, '');
+}
+function makeId() {
+  return 'draft_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+function clone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+async function getDB() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(META_STORE)) db.createObjectStore(META_STORE, { keyPath: 'key' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  return dbPromise;
+}
+async function dbPut(storeName, value) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).put(value);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function dbGet(storeName, key) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function dbDelete(storeName, key) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function dbGetAll(storeName) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function updateOnlineStatus() {
+  document.getElementById('offlineBadge').classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+function setDraftStatus(text) {
+  document.getElementById('draftStatus').textContent = text;
+}
+
+function setTodayDefaults() {
+  const dateField = document.getElementById('date');
+  if (!dateField.value) dateField.value = defaultDateString();
+  document.getElementById('dayOfWeek').value = dayNameFromDate(dateField.value);
+}
+
+function wireAutoDayOfWeek() {
+  document.getElementById('date').addEventListener('change', e => {
+    document.getElementById('dayOfWeek').value = dayNameFromDate(e.target.value);
+  });
+}
+
+function toggleYN(groupId, value, btn) {
+  ynValues[groupId] = value;
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  group.querySelectorAll('.yn-btn').forEach(b => b.classList.remove('active-yes', 'active-no', 'active-na'));
+  btn.classList.add(value === 'Yes' ? 'active-yes' : value === 'No' ? 'active-no' : 'active-na');
+}
+
+function setYNValue(groupId, value) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  ynValues[groupId] = value;
+  group.querySelectorAll('.yn-btn').forEach(b => {
+    b.classList.remove('active-yes', 'active-no', 'active-na');
+    if (b.textContent.trim() === value) {
+      b.classList.add(value === 'Yes' ? 'active-yes' : value === 'No' ? 'active-no' : 'active-na');
+    }
+  });
+}
+
+function renderRepeatEmptyState(type) {
+  const container = document.getElementById(`${type}-repeat-container`);
+  if (!container) return;
+  const hasItems = container.querySelector('.repeat-item');
+  let empty = container.querySelector('.repeat-empty');
+  if (!hasItems && !empty) {
+    empty = document.createElement('div');
+    empty.className = 'repeat-empty';
+    empty.textContent = 'No entries added yet.';
+    container.appendChild(empty);
+  }
+  if (hasItems && empty) empty.remove();
+}
+
+function addRepeatItem(type, data = {}, scrollIntoView = true) {
+  if (!repeatCounters[type]) repeatCounters[type] = 0;
+  const idx = ++repeatCounters[type];
+  const tpl = repeatTemplates[type];
+  const container = document.getElementById(`${type}-repeat-container`);
+  if (!container) return;
+
+  const item = document.createElement('div');
+  item.className = 'repeat-item';
+  item.dataset.idx = String(idx);
+  item.dataset.type = type;
+
+  let fieldsHTML = '';
+  tpl.fields.forEach(f => {
+    const fId = `${type}_${idx}_${f.id}`;
+    const val = data[f.id] || '';
+    fieldsHTML += `<div class="field"><label>${f.label}</label>`;
+    if (f.type === 'text') {
+      fieldsHTML += `<input type="text" id="${fId}" value="${escapeHtmlAttr(val)}" />`;
+    } else if (f.type === 'time') {
+      fieldsHTML += `<input type="time" id="${fId}" value="${escapeHtmlAttr(val)}" />`;
+    } else if (f.type === 'textarea') {
+      fieldsHTML += `<textarea id="${fId}">${escapeHtmlText(val)}</textarea>`;
+    } else if (f.type === 'select') {
+      fieldsHTML += `<select id="${fId}">${f.options.map(o => `<option${o === val ? ' selected' : ''}>${escapeHtmlText(o)}</option>`).join('')}</select>`;
+    } else if (f.type === 'yn') {
+      const ynId = `yn-${type}-${idx}-${f.id}`;
+      fieldsHTML += `<div class="yn-group" id="${ynId}">
+        <button class="yn-btn${val === 'Yes' ? ' active-yes' : ''}" type="button" onclick="toggleYN('${ynId}','Yes',this)">Yes</button>
+        <button class="yn-btn${val === 'No' ? ' active-no' : ''}" type="button" onclick="toggleYN('${ynId}','No',this)">No</button>
+      </div>`;
+    }
+    fieldsHTML += `</div>`;
+  });
+
+  item.innerHTML = `
+    <div class="repeat-item-header">
+      <span class="repeat-item-title">${tpl.label} #${idx}</span>
+      <div class="repeat-item-actions">
+        <button class="btn-duplicate-inline" type="button" onclick="duplicateRepeatItem('${type}', ${idx})" title="Duplicate entry">Duplicate</button>
+        <button class="btn-remove" type="button" onclick="removeRepeatItem('${type}', ${idx})" title="Remove entry">✕</button>
+      </div>
+    </div>
+    <div class="repeat-item-body">${fieldsHTML}</div>
+  `;
+
+  const empty = container.querySelector('.repeat-empty');
+  if (empty) empty.remove();
+  container.appendChild(item);
+
+  tpl.fields.forEach(f => {
+    if (f.type === 'yn' && data[f.id]) {
+      setYNValue(`yn-${type}-${idx}-${f.id}`, data[f.id]);
+    }
+  });
+
+  if (scrollIntoView) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  renderRepeatEmptyState(type);
+}
+
+function removeRepeatItem(type, idx) {
+  const item = document.querySelector(`.repeat-item[data-type="${type}"][data-idx="${idx}"]`);
+  if (item) item.remove();
+  renderRepeatEmptyState(type);
+}
+
+function duplicateRepeatItem(type, idx) {
+  const data = getRepeatItemData(type, idx);
+  addRepeatItem(type, data);
+}
+
+function getRepeatItemData(type, idx) {
+  const tpl = repeatTemplates[type];
+  const out = {};
+  tpl.fields.forEach(f => {
+    if (f.type === 'yn') {
+      out[f.id] = ynValues[`yn-${type}-${idx}-${f.id}`] || '';
+    } else {
+      const el = document.getElementById(`${type}_${idx}_${f.id}`);
+      out[f.id] = el ? el.value : '';
+    }
+  });
+  return out;
+}
+
+function collectRepeatData(type) {
+  return Array.from(document.querySelectorAll(`.repeat-item[data-type="${type}"]`)).map(item => {
+    return getRepeatItemData(type, item.dataset.idx);
+  });
+}
+
+function renderPhotos() {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  photos.forEach((p, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'photo-slot';
+    slot.innerHTML = `
+      <img src="${p.src}" alt="Photo ${i + 1}" />
+      <button class="photo-remove" type="button" onclick="removePhoto(${i})">✕</button>
+      <input class="photo-label-input" type="text" placeholder="Caption…" value="${escapeHtmlAttr(p.label || '')}" oninput="photos[${i}].label = this.value" />
+    `;
+    grid.appendChild(slot);
+  });
+  if (!photos.length) {
+    const empty = document.createElement('label');
+    empty.className = 'photo-upload-btn';
+    empty.setAttribute('for', 'photoInput');
+    empty.innerHTML = '<div class="photo-upload-icon">📷</div><div>Add photos</div><div class="microcopy">Default frame is 4:3</div>';
+    grid.appendChild(empty);
+  }
+}
+
+function handlePhotoUpload(e) {
+  Array.from(e.target.files || []).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      photos.push({ src: ev.target.result, label: '' });
+      renderPhotos();
+      queueAutosave();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function removePhoto(i) {
+  photos.splice(i, 1);
+  renderPhotos();
+  queueAutosave();
+}
+
+function escapeHtmlText(value) {
+  return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function escapeHtmlAttr(value) {
+  return escapeHtmlText(value).replace(/"/g, '&quot;');
+}
+
+function gatherData() {
+  const fields = {};
+  document.querySelectorAll('input[id], textarea[id], select[id]').forEach(el => {
+    if (!el.id) return;
+    if (el.id === 'photoInput' || el.id === 'importInput' || el.id === 'draftPicker') return;
+    if (el.closest('.repeat-item')) return;
+    fields[el.id] = el.value;
+  });
+  const repeatData = {};
+  repeatTypes.forEach(type => {
+    repeatData[type] = collectRepeatData(type);
+  });
+  return {
+    schemaVersion: 2,
+    savedAt: new Date().toISOString(),
+    fields,
+    ynValues: clone(ynValues),
+    repeatData,
+    photos: clone(photos),
+  };
+}
+
+function applyData(data, options = {}) {
+  const keepCurrentDraftMeta = options.keepCurrentDraftMeta || false;
+  document.querySelectorAll('input[id], textarea[id], select[id]').forEach(el => {
+    if (!el.id || el.id === 'photoInput' || el.id === 'importInput' || el.id === 'draftPicker') return;
+    if (el.closest('.repeat-item')) return;
+    if (data.fields && Object.prototype.hasOwnProperty.call(data.fields, el.id)) {
+      el.value = data.fields[el.id];
+    } else if (!keepCurrentDraftMeta) {
+      if (el.id === 'date') el.value = defaultDateString();
+      else if (el.id === 'dayOfWeek') el.value = dayNameFromDate(defaultDateString());
+      else el.value = '';
+    }
+  });
+
+  Object.keys(ynValues).forEach(k => delete ynValues[k]);
+  document.querySelectorAll('.yn-group').forEach(group => {
+    group.querySelectorAll('.yn-btn').forEach(btn => btn.classList.remove('active-yes', 'active-no', 'active-na'));
+  });
+  if (data.ynValues) {
+    Object.entries(data.ynValues).forEach(([groupId, value]) => setYNValue(groupId, value));
+  }
+
+  repeatTypes.forEach(type => {
+    document.getElementById(`${type}-repeat-container`).innerHTML = '';
+    repeatCounters[type] = 0;
+    (data.repeatData && data.repeatData[type] ? data.repeatData[type] : []).forEach(item => addRepeatItem(type, item, false));
+    renderRepeatEmptyState(type);
+  });
+
+  photos = Array.isArray(data.photos) ? clone(data.photos) : [];
+  renderPhotos();
+  setTodayDefaults();
+  if (!document.getElementById('draftName').value) document.getElementById('draftName').value = currentDraftName;
+}
+
+function getSuggestedDraftName() {
+  const project = document.getElementById('projectName').value.trim() || 'BioReport';
+  const shortProject = project.split('(')[0].trim().slice(0, 40);
+  return `${shortProject} ${document.getElementById('date').value || defaultDateString()}`.trim();
+}
+
+async function saveDraftRecord(id, name, payload) {
+  const record = { id, name, savedAt: new Date().toISOString(), payload };
+  await dbPut(STORE_NAME, record);
+  await dbPut(META_STORE, { key: 'lastDraftId', value: id });
+}
+
+async function saveCurrentDraft(showMessage = true) {
+  const payload = gatherData();
+  const enteredName = document.getElementById('draftName').value.trim();
+  const name = enteredName || getSuggestedDraftName();
+  document.getElementById('draftName').value = name;
+  if (currentDraftId === AUTOSAVE_ID) currentDraftName = name;
+  await saveDraftRecord(currentDraftId, name, payload);
+  setDraftStatus(`Saved draft: ${name}`);
+  await refreshDraftPicker();
+  if (showMessage) showToast('✅ Draft saved on this device');
+}
+
+async function saveAsNewDraft() {
+  const defaultName = getSuggestedDraftName();
+  const name = prompt('Name for the new saved draft:', defaultName);
+  if (!name) return;
+  currentDraftId = makeId();
+  currentDraftName = name.trim();
+  document.getElementById('draftName').value = currentDraftName;
+  await saveCurrentDraft(true);
+}
+
+async function refreshDraftPicker() {
+  const picker = document.getElementById('draftPicker');
+  const records = await dbGetAll(STORE_NAME);
+  const visibleRecords = records.filter(r => r.id !== AUTOSAVE_ID).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+  picker.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = visibleRecords.length ? 'Select a saved draft…' : 'No saved drafts yet';
+  picker.appendChild(placeholder);
+  visibleRecords.forEach(record => {
+    const option = document.createElement('option');
+    option.value = record.id;
+    option.textContent = `${record.name} — ${new Date(record.savedAt).toLocaleString()}`;
+    picker.appendChild(option);
+  });
+}
+
+async function loadDraftById(id) {
+  const record = await dbGet(STORE_NAME, id);
+  if (!record) {
+    showToast('Could not find that saved draft');
+    return;
+  }
+  currentDraftId = id;
+  currentDraftName = record.name || 'Loaded draft';
+  applyData(record.payload || {});
+  document.getElementById('draftName').value = record.name || getSuggestedDraftName();
+  setDraftStatus(`Loaded draft: ${currentDraftName}`);
+  await dbPut(META_STORE, { key: 'lastDraftId', value: currentDraftId });
+  showToast('📂 Draft loaded');
+}
+
+async function loadSelectedDraft() {
+  const picker = document.getElementById('draftPicker');
+  if (!picker.value) {
+    showToast('Select a saved draft first');
+    return;
+  }
+  await loadDraftById(picker.value);
+}
+
+async function deleteSelectedDraft() {
+  const picker = document.getElementById('draftPicker');
+  if (!picker.value) {
+    showToast('Select a saved draft first');
+    return;
+  }
+  const optionLabel = picker.options[picker.selectedIndex].textContent;
+  if (!confirm(`Delete this saved draft?\n\n${optionLabel}`)) return;
+  await dbDelete(STORE_NAME, picker.value);
+  await refreshDraftPicker();
+  showToast('🗑 Saved draft deleted');
+}
+
+function clearDailyFields() {
+  if (!confirm('Clear daily observations, weather, repeatable findings, notes, and photos while keeping project and contractor details?')) return;
+  const idsToClear = [
+    'biomonitor','mapNum','actNotes','weatherCond','temp','humidity','wind','clouds','constActivities',
+    'nssBirds','nssFish','nssHerp','nssInvert','nssMamm','nssNotes','removalNotes','wetImpactType','wetNotes'
+  ];
+  idsToClear.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('date').value = defaultDateString();
+  document.getElementById('dayOfWeek').value = dayNameFromDate(document.getElementById('date').value);
+  document.getElementById('actStart').value = '07:00';
+  document.getElementById('actEnd').value = '15:00';
+  document.getElementById('constStart').value = '07:00';
+  document.getElementById('constEnd').value = '15:30';
+
+  ['yn-compliant','yn-speciesObs','yn-take','yn-batHabitat','yn-batsObs','yn-maternity','yn-nestsObs','yn-nestBehav','yn-activeNests','yn-nestsRemoved','yn-wetlands','yn-wetImpact','yn-wetOutScope','yn-vegImpact','yn-vegOutScope'].forEach(id => setYNValue(id, ''));
+  repeatTypes.forEach(type => {
+    document.getElementById(`${type}-repeat-container`).innerHTML = '';
+    repeatCounters[type] = 0;
+    renderRepeatEmptyState(type);
+  });
+  photos = [];
+  renderPhotos();
+  document.getElementById('draftName').value = getSuggestedDraftName();
+  queueAutosave();
+  showToast('🧹 Daily fields cleared');
+}
+
+async function duplicateForToday() {
+  const payload = gatherData();
+  const newNameDefault = getSuggestedDraftName();
+  const name = prompt('Name for today\'s copy:', newNameDefault);
+  if (!name) return;
+  payload.fields.date = defaultDateString();
+  payload.fields.dayOfWeek = dayNameFromDate(payload.fields.date);
+  payload.fields.draftName = name.trim();
+  currentDraftId = makeId();
+  currentDraftName = name.trim();
+  applyData(payload);
+  document.getElementById('draftName').value = currentDraftName;
+  await saveDraftRecord(currentDraftId, currentDraftName, gatherData());
+  await refreshDraftPicker();
+  setDraftStatus(`Copied for today: ${currentDraftName}`);
+  showToast('🗂 Today\'s copy created');
+}
+
+function exportJsonBackup() {
+  const payload = gatherData();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${sanitizeFileName(document.getElementById('draftName').value || getSuggestedDraftName())}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('⬇️ Backup exported');
+}
+
+function importJsonBackup(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyData(data);
+      currentDraftId = makeId();
+      currentDraftName = data.fields && data.fields.draftName ? data.fields.draftName : getSuggestedDraftName();
+      document.getElementById('draftName').value = currentDraftName;
+      await saveCurrentDraft(false);
+      showToast('📥 Backup imported into a new saved draft');
+    } catch (err) {
+      showToast('⚠️ Could not import that backup');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function queueAutosave() {
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => saveCurrentDraft(false).catch(() => {}), 1200);
+}
+
+function wireAutosave() {
+  document.addEventListener('input', e => {
+    if (e.target.id === 'photoInput' || e.target.id === 'importInput') return;
+    queueAutosave();
+  });
+  document.addEventListener('change', e => {
+    if (e.target.id === 'photoInput' || e.target.id === 'importInput') return;
+    queueAutosave();
+  });
+}
+
+async function restoreLastDraft() {
+  const meta = await dbGet(META_STORE, 'lastDraftId');
+  if (meta && meta.value) {
+    const record = await dbGet(STORE_NAME, meta.value);
+    if (record) {
+      currentDraftId = record.id;
+      currentDraftName = record.name || 'Current draft';
+      applyData(record.payload || {});
+      document.getElementById('draftName').value = record.name || '';
+      setDraftStatus(`Restored draft: ${currentDraftName}`);
+      return true;
+    }
+  }
+  const autosave = await dbGet(STORE_NAME, AUTOSAVE_ID);
+  if (autosave) {
+    currentDraftId = AUTOSAVE_ID;
+    currentDraftName = autosave.name || 'Current draft';
+    applyData(autosave.payload || {});
+    document.getElementById('draftName').value = autosave.name || '';
+    setDraftStatus(`Restored draft: ${currentDraftName}`);
+    return true;
+  }
+  return false;
+}
+
+function seedEmptyState() {
+  setTodayDefaults();
+  repeatTypes.forEach(type => renderRepeatEmptyState(type));
+  renderPhotos();
+  document.getElementById('draftName').value = getSuggestedDraftName();
+  setDraftStatus('New unsaved draft');
+}
+
+function exportPDF() {
+  saveCurrentDraft(false).catch(() => {});
+  showToast('🖨 Opening print / Save as PDF…');
+  setTimeout(() => window.print(), 400);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+updateOnlineStatus();
+wireAutoDayOfWeek();
+wireAutosave();
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await getDB();
+    await refreshDraftPicker();
+    const restored = await restoreLastDraft();
+    if (!restored) seedEmptyState();
+    repeatTypes.forEach(type => renderRepeatEmptyState(type));
+  } catch (err) {
+    seedEmptyState();
+    showToast('⚠️ Local storage unavailable in this browser');
+  }
+});
+</script>
+</body>
+</html>
