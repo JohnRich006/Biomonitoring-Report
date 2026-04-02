@@ -1,4 +1,4 @@
-const CACHE_NAME = "endemic-biomonitor-pwa-v7";
+const CACHE_NAME = "endemic-biomonitor-pwa-v8";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,7 +6,6 @@ const APP_SHELL = [
   "./sw.js"
 ];
 
-// Install - cache core files
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
@@ -14,7 +13,6 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate - clear old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -28,7 +26,6 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Allow app to force update
 self.addEventListener("message", (event) => {
   if (!event.data) return;
 
@@ -45,17 +42,18 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Fetch - cache-first strategy with fallback
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+  const request = event.request;
+
+  if (request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      return fetch(event.request)
+      return fetch(request)
         .then((networkResponse) => {
           if (!networkResponse || networkResponse.status !== 200) {
             return networkResponse;
@@ -63,19 +61,18 @@ self.addEventListener("fetch", (event) => {
 
           const responseClone = networkResponse.clone();
 
-          if (event.request.url.startsWith(self.location.origin)) {
+          if (request.url.startsWith(self.location.origin)) {
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
+              cache.put(request, responseClone);
             });
           }
 
           return networkResponse;
         })
         .catch(() => {
-          // Fallback for offline navigation
           if (
-            event.request.mode === "navigate" ||
-            (event.request.headers.get("accept") || "").includes("text/html")
+            request.mode === "navigate" ||
+            (request.headers.get("accept") || "").includes("text/html")
           ) {
             return caches.match("./index.html");
           }
