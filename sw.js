@@ -1,4 +1,4 @@
-const CACHE_NAME = "endemic-biomonitor-pwa-v6";
+const CACHE_NAME = "endemic-biomonitor-pwa-v7";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const APP_SHELL = [
   "./sw.js"
 ];
 
+// Install - cache core files
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
@@ -13,6 +14,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
+// Activate - clear old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -26,32 +28,34 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Allow app to force update
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
+  if (!event.data) return;
+
+  if (event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 
-  if (event.data && event.data.type === "CLEAR_CACHES") {
+  if (event.data.type === "CLEAR_CACHES") {
     event.waitUntil(
-      caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+      caches.keys().then((keys) =>
+        Promise.all(keys.map((key) => caches.delete(key)))
+      )
     );
   }
 });
 
+// Fetch - cache-first strategy with fallback
 self.addEventListener("fetch", (event) => {
-  const request = event.request;
-
-  if (request.method !== "GET") {
-    return;
-  }
+  if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
+    caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      return fetch(request)
+      return fetch(event.request)
         .then((networkResponse) => {
           if (!networkResponse || networkResponse.status !== 200) {
             return networkResponse;
@@ -59,18 +63,19 @@ self.addEventListener("fetch", (event) => {
 
           const responseClone = networkResponse.clone();
 
-          if (request.url.startsWith(self.location.origin)) {
+          if (event.request.url.startsWith(self.location.origin)) {
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
+              cache.put(event.request, responseClone);
             });
           }
 
           return networkResponse;
         })
         .catch(() => {
+          // Fallback for offline navigation
           if (
-            request.mode === "navigate" ||
-            (request.headers.get("accept") || "").includes("text/html")
+            event.request.mode === "navigate" ||
+            (event.request.headers.get("accept") || "").includes("text/html")
           ) {
             return caches.match("./index.html");
           }
