@@ -1,4 +1,4 @@
-const CACHE_NAME = "endemic-biomonitor-pwa-v3";
+const CACHE_NAME = "endemic-biomonitor-pwa-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -26,6 +26,18 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+
+  if (event.data && event.data.type === "CLEAR_CACHES") {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+    );
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
@@ -41,12 +53,13 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(request)
         .then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200) {
+            return networkResponse;
+          }
+
           const responseClone = networkResponse.clone();
 
-          if (
-            request.url.startsWith(self.location.origin) &&
-            networkResponse.status === 200
-          ) {
+          if (request.url.startsWith(self.location.origin)) {
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, responseClone);
             });
