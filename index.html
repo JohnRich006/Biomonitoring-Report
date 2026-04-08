@@ -306,11 +306,11 @@
       <div class="grid">
         <div class="field">
           <label for="bioStartTime">Start Time</label>
-          <input id="bioStartTime" type="time" />
+          <input id="bioStartTime" type="text" inputmode="numeric" placeholder="0700" maxlength="4" />
         </div>
         <div class="field">
           <label for="bioEndTime">End Time</label>
-          <input id="bioEndTime" type="time" />
+          <input id="bioEndTime" type="text" inputmode="numeric" placeholder="1530" maxlength="4" />
         </div>
       </div>
       <div class="field" style="margin-top:12px;">
@@ -361,11 +361,11 @@
       <div class="grid">
         <div class="field">
           <label for="constructionStartTime">Start Time</label>
-          <input id="constructionStartTime" type="time" />
+          <input id="constructionStartTime" type="text" inputmode="numeric" placeholder="0700" maxlength="4" />
         </div>
         <div class="field">
           <label for="constructionEndTime">End Time</label>
-          <input id="constructionEndTime" type="time" />
+          <input id="constructionEndTime" type="text" inputmode="numeric" placeholder="1500" maxlength="4" />
         </div>
       </div>
       <div class="field" style="margin-top:12px;">
@@ -589,7 +589,8 @@
 
   <script>
     const LOGO_SRC = "logo.png";
-    const STORAGE_KEY = "endemic-biomonitor-draft-v10";
+    const STORAGE_KEY = "endemic-biomonitor-draft-v11";
+    let LOGO_DATA_URL_CACHE = "";
 
     const PROJECTS = [
       {
@@ -651,7 +652,7 @@
         title: "Take Entry",
         fields: [
           ["speciesName", "Species Common Name / Scientific Name"],
-          ["takeType", "What type of take occurred?"],
+          ["takeType", "What type of take occurred?", "select", ["", "Intentional", "Incidental"]],
           ["projectRelated", "Did take occur due to project work activity?", "select", ["", "Yes", "No"]],
           ["outsidePermit", "Did take occur outside of the scope of the project permit(s)?", "select", ["", "Yes", "No"]],
           ["time", "Time"],
@@ -715,12 +716,35 @@
     };
 
     function $(id){ return document.getElementById(id); }
+
     function esc(value){
       return String(value || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function blobToDataURL(blob){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function getLogoDataUrl(){
+      if (LOGO_DATA_URL_CACHE) return LOGO_DATA_URL_CACHE;
+      try {
+        const response = await fetch(LOGO_SRC);
+        const blob = await response.blob();
+        LOGO_DATA_URL_CACHE = await blobToDataURL(blob);
+        return LOGO_DATA_URL_CACHE;
+      } catch (err) {
+        console.warn("Could not load logo as data URL", err);
+        return LOGO_SRC;
+      }
     }
 
     function updateSyncBadge(){
@@ -747,19 +771,44 @@
 
     function normalizeMilitaryTime(value){
       if (!value) return "";
-      let raw = String(value).trim().toLowerCase();
-      if (/^\d{2}:\d{2}$/.test(raw)) return raw.replace(":", "");
-      raw = raw.replace(/[^0-9apm: ]/g, "");
+      let raw = String(value).trim();
+
+      raw = raw.replace(/[^\dapm: ]/gi, "").toLowerCase();
+
+      if (/^\d{4}$/.test(raw)) {
+        const hh = parseInt(raw.slice(0, 2), 10);
+        const mm = parseInt(raw.slice(2, 4), 10);
+        if (hh <= 23 && mm <= 59) return raw;
+      }
+
+      if (/^\d{2}:\d{2}$/.test(raw)) {
+        const hh = parseInt(raw.slice(0, 2), 10);
+        const mm = parseInt(raw.slice(3, 5), 10);
+        if (hh <= 23 && mm <= 59) return raw.replace(":", "");
+      }
+
       const match = raw.match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/);
-      if (!match) return value;
+      if (!match) return raw;
+
       let hh = parseInt(match[1], 10);
       let mm = parseInt(match[2] || "00", 10);
       const ap = match[3];
+
       if (ap === "pm" && hh < 12) hh += 12;
       if (ap === "am" && hh === 12) hh = 0;
+
       if (hh > 23) hh = 23;
       if (mm > 59) mm = 59;
+
       return String(hh).padStart(2, "0") + String(mm).padStart(2, "0");
+    }
+
+    function normalizeTypedTimeField(id){
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("blur", () => {
+        el.value = normalizeMilitaryTime(el.value);
+      });
     }
 
     function formatDisplayDate(isoDate){
@@ -862,8 +911,19 @@
           } else {
             input = document.createElement("input");
           }
+
           input.value = item[name] || "";
           input.addEventListener("input", () => { item[name] = input.value; });
+          if (name === "time") {
+            input.setAttribute("inputmode", "numeric");
+            input.setAttribute("placeholder", "1400");
+            input.setAttribute("maxlength", "4");
+            input.addEventListener("blur", () => {
+              item[name] = normalizeMilitaryTime(input.value);
+              input.value = item[name];
+            });
+          }
+
           fieldWrap.appendChild(input);
           grid.appendChild(fieldWrap);
         });
@@ -1045,7 +1105,9 @@
     function renderEntryBlock(entry, labels){
       return labels.map(def => {
         const [key, label] = def;
-        const value = entry[key] || "";
+        const rawValue = entry[key] || "";
+        let value = rawValue;
+        if (key === "time") value = normalizeMilitaryTime(rawValue);
         if (String(value).trim() === "") return "";
         return `<p><strong>${esc(label)}</strong> ${esc(value)}</p>`;
       }).join("");
@@ -1055,7 +1117,7 @@
       return `<div class="page-break"></div>`;
     }
 
-    function buildReportHtml(forWord){
+    async function buildReportHtml(forWord){
       const d = getFormData();
       const reportDate = formatDisplayDate(d.reportDate);
       const reportDay = d.reportDay || "";
@@ -1063,17 +1125,18 @@
       const bioEnd = normalizeMilitaryTime(d.bioEndTime);
       const conStart = normalizeMilitaryTime(d.constructionStartTime);
       const conEnd = normalizeMilitaryTime(d.constructionEndTime);
+      const logoDataUrl = await getLogoDataUrl();
 
       const reportCss = `
         <style>
           @page{
             size:8.5in 11in;
-            margin:0.75in 0.75in 0.75in 0.75in;
+            margin:0.7in 0.75in 0.75in 0.75in;
           }
           body{
             font-family:Arial,Helvetica,sans-serif;
             font-size:11pt;
-            line-height:1.25;
+            line-height:1.35;
             color:#000;
           }
           .doc{
@@ -1082,27 +1145,27 @@
           }
           .hdr{
             text-align:center;
-            margin-bottom:14pt;
+            margin-bottom:18pt;
           }
           .hdr img{
-            width:0.7in;
+            width:0.72in;
             height:auto;
             display:block;
             margin:0 auto 4pt auto;
           }
           .org{
-            font-size:16pt;
+            font-size:15pt;
             margin:0 0 2pt 0;
           }
           .title{
-            font-size:16pt;
+            font-size:15pt;
             font-weight:bold;
             text-transform:uppercase;
-            margin:0 0 14pt 0;
+            margin:0 0 16pt 0;
           }
           .meta{
             width:100%;
-            margin-bottom:10pt;
+            margin-bottom:12pt;
           }
           .left{
             float:left;
@@ -1118,15 +1181,15 @@
           h2{
             font-size:13pt;
             font-weight:bold;
-            margin:14pt 0 8pt 0;
+            margin:18pt 0 10pt 0;
           }
           p{
-            margin:0 0 8pt 0;
+            margin:0 0 9pt 0;
           }
           .weather-grid{
             width:100%;
             border-collapse:collapse;
-            margin:6pt 0 12pt 0;
+            margin:8pt 0 14pt 0;
           }
           .weather-grid td{
             width:25%;
@@ -1141,14 +1204,43 @@
             page-break-before:always;
             break-before:page;
           }
+          .entry-block{
+            margin:0 0 12pt 0;
+          }
+          .photo-page-header{
+            text-align:center;
+            margin-bottom:16pt;
+          }
+          .photo-page-header img{
+            width:0.72in;
+            height:auto;
+            display:block;
+            margin:0 auto 4pt auto;
+          }
+          .photo-page-org{
+            font-size:14pt;
+            margin:0 0 6pt 0;
+          }
+          .photo-page-rule{
+            border:none;
+            border-top:3px solid #6d2c2c;
+            margin:0 0 10pt 0;
+          }
+          .photo-page-title{
+            text-align:center;
+            font-size:16pt;
+            font-weight:bold;
+            text-decoration:underline;
+            margin:0 0 18pt 0;
+          }
           .photo-block{
-            margin:10pt 0 18pt 0;
+            margin:12pt 0 22pt 0;
           }
           .photo-block img{
             width:4.75in;
             height:auto;
             display:block;
-            margin:0 auto 8pt auto;
+            margin:0 auto 10pt auto;
           }
           .figure-caption{
             margin-top:6pt;
@@ -1157,7 +1249,7 @@
       `;
 
       const biologicalResourceEntries = d.biologicalResources.map((entry, idx) => `
-        <div>
+        <div class="entry-block">
           ${idx > 0 ? "<br>" : ""}
           ${renderEntryBlock(entry, [
             ["time", "Time(s) of Observation:"],
@@ -1172,7 +1264,7 @@
       `).join("");
 
       const takeEntries = d.takeEntries.map((entry, idx) => `
-        <div>
+        <div class="entry-block">
           ${idx > 0 ? "<br>" : ""}
           ${renderEntryBlock(entry, [
             ["speciesName", "Species Common Name / Scientific Name:"],
@@ -1190,7 +1282,7 @@
       `).join("");
 
       const roostSites = d.roostSites.map((entry, idx) => `
-        <div>
+        <div class="entry-block">
           ${idx > 0 ? "<br>" : ""}
           ${renderEntryBlock(entry, [
             ["time", "Time(s) of Observation:"],
@@ -1205,7 +1297,7 @@
       `).join("");
 
       const nestFindings = d.nestFindings.map((entry, idx) => `
-        <div>
+        <div class="entry-block">
           ${idx > 0 ? "<br>" : ""}
           ${renderEntryBlock(entry, [
             ["time", "Time(s) of Observation:"],
@@ -1222,7 +1314,7 @@
       `).join("");
 
       const nestRemovals = d.nestRemovals.map((entry, idx) => `
-        <div>
+        <div class="entry-block">
           ${idx > 0 ? "<br>" : ""}
           ${renderEntryBlock(entry, [
             ["speciesName", "Species Common Name / Scientific Name:"],
@@ -1237,7 +1329,7 @@
       `).join("");
 
       const vegetationEntries = d.vegetationEntries.map((entry, idx) => `
-        <div>
+        <div class="entry-block">
           ${idx > 0 ? "<br>" : ""}
           ${renderEntryBlock(entry, [
             ["habitatType", "Habitat Type:"],
@@ -1264,7 +1356,7 @@
         ${forWord ? '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Daily Bio-monitoring Report</title>' + reportCss + '</head><body>' : reportCss}
         <div class="doc">
           <div class="hdr">
-            <img src="${LOGO_SRC}" alt="Endemic logo">
+            <img src="${logoDataUrl}" alt="Endemic logo">
             <div class="org">Endemic Environmental Services</div>
             <div class="title">Daily Bio-monitoring Report</div>
           </div>
@@ -1390,16 +1482,21 @@
 
           ${sectionBreak()}
 
-          <h2>Photos</h2>
+          <div class="photo-page-header">
+            <img src="${logoDataUrl}" alt="Endemic logo">
+            <div class="photo-page-org">Endemic Environmental Services</div>
+            <hr class="photo-page-rule">
+            <div class="photo-page-title">Photos</div>
+          </div>
           ${photosHtml}
         </div>
         ${forWord ? "</body></html>" : ""}
       `;
     }
 
-    function exportWord(){
+    async function exportWord(){
       updateDayFromDate();
-      const html = buildReportHtml(true);
+      const html = await buildReportHtml(true);
       const blob = new Blob(["\ufeff", html], { type: "application/msword" });
       const a = document.createElement("a");
       const datePart = $("reportDate").value || "report";
@@ -1410,10 +1507,10 @@
       document.body.removeChild(a);
     }
 
-    function exportPdf(){
+    async function exportPdf(){
       updateDayFromDate();
-      $("printContainer").innerHTML = buildReportHtml(false);
-      setTimeout(() => window.print(), 100);
+      $("printContainer").innerHTML = await buildReportHtml(false);
+      setTimeout(() => window.print(), 120);
     }
 
     async function checkForUpdates(){
@@ -1435,6 +1532,11 @@
       $("reportDate").addEventListener("change", updateDayFromDate);
       $("projectNameNumber").addEventListener("change", applyProjectAutofill);
       $("projectNameNumber").addEventListener("blur", applyProjectAutofill);
+
+      normalizeTypedTimeField("bioStartTime");
+      normalizeTypedTimeField("bioEndTime");
+      normalizeTypedTimeField("constructionStartTime");
+      normalizeTypedTimeField("constructionEndTime");
 
       $("saveDraftBtn").addEventListener("click", saveDraft);
       $("loadDraftBtn").addEventListener("click", loadDraft);
