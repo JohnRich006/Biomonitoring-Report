@@ -1,9 +1,10 @@
-const CACHE_NAME = "endemic-biomonitor-pwa-v8";
+const CACHE_NAME = "endemic-biomonitor-pwa-v10";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./sw.js"
+  "./sw.js",
+  "./logo.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -44,30 +45,22 @@ self.addEventListener("message", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-
   if (request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
 
       return fetch(request)
-        .then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200) {
-            return networkResponse;
-          }
-
-          const responseClone = networkResponse.clone();
+        .then((response) => {
+          if (!response || response.status !== 200) return response;
+          const clone = response.clone();
 
           if (request.url.startsWith(self.location.origin)) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
 
-          return networkResponse;
+          return response;
         })
         .catch(() => {
           if (
