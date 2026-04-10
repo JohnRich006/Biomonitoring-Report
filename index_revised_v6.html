@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Endemic Daily Bio-monitoring Report</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#31513d" />
+  <style>
+    :root{
+      --bg:#f4f4ef;
+      --card:#ffffff;
+      --ink:#1f2a1f;
+      --muted:#66706a;
+      --line:#d7ddd8;
+      --accent:#31513d;
+      --accent-2:#708c73;
+      --danger:#8a3030;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+    body{padding:14px}
+    .app{max-width:1080px;margin:0 auto}
+    .toolbar{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      margin-bottom:14px;
+      box-shadow:0 2px 10px rgba(0,0,0,.05);
+    }
+    .toolbar-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .toolbar-left,.toolbar-right{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .badge{
+      font-size:12px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#e8eee9;
+      color:var(--accent);
+      border:1px solid #cfd8d2;
+    }
+    .badge.offline{background:#f6e9e9;color:#8a3030;border-color:#e4caca}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:16px;
+      margin-bottom:14px;
+      box-shadow:0 2px 10px rgba(0,0,0,.05);
+    }
+    h1{
+      margin:0 0 8px 0;
+      font-size:24px;
+      color:var(--accent);
+    }
+    h2{
+      margin:0 0 14px 0;
+      font-size:18px;
+      color:var(--accent);
+    }
+    h3{
+      margin:18px 0 10px 0;
+      font-size:16px;
+      color:var(--accent);
+    }
+    p.help{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+    .grid-4{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+    .field.full{grid-column:1 / -1}
+    .field label{
+      font-size:13px;
+      font-weight:700;
+    }
+    input,select,textarea,button{
+      font:inherit;
+    }
+    input,select,textarea{
+      width:100%;
+      border:1px solid #cfd8d2;
+      background:#fff;
+      border-radius:10px;
+      padding:10px 12px;
+      min-height:42px;
+    }
+    textarea{
+      min-height:100px;
+      resize:vertical;
+    }
+    .input-with-action{
+      display:flex;
+      gap:8px;
+      align-items:stretch;
+    }
+    .input-with-action input,
+    .input-with-action textarea,
+    .input-with-action select{
+      flex:1;
+    }
+    .gps-btn{
+      min-width:42px;
+      min-height:42px;
+      border:1px solid #cfd8d2;
+      background:#eef3ef;
+      color:var(--accent);
+      border-radius:10px;
+      cursor:pointer;
+      font-size:18px;
+      line-height:1;
+      padding:0 10px;
+      flex:0 0 auto;
+    }
+    .gps-btn:disabled{
+      opacity:.6;
+      cursor:wait;
+    }
+    .btn{
+      border:1px solid #cfd8d2;
+      background:#fff;
+      color:var(--ink);
+      border-radius:10px;
+      padding:10px 12px;
+      cursor:pointer;
+    }
+    .btn.primary{
+      background:var(--accent);
+      color:#fff;
+      border-color:var(--accent);
+    }
+    .btn.secondary{
+      background:#eef3ef;
+      color:var(--accent);
+      border-color:#cfd8d2;
+    }
+    .btn.danger{
+      background:#fff5f5;
+      color:var(--danger);
+      border-color:#e3bcbc;
+    }
+    .btn.small{
+      padding:8px 10px;
+      font-size:13px;
+    }
+    .section-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+      align-items:center;
+    }
+    .repeat-list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .repeat-item{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px;
+      background:#fafcfa;
+    }
+    .repeat-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .repeat-head strong{color:var(--accent)}
+    .photo-list{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:12px;
+    }
+    .photo-card{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px;
+      background:#fbfcfb;
+    }
+    .photo-preview-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .photo-frame{
+      width:100%;
+      aspect-ratio:4 / 3;
+      border:1px solid #ccd4cf;
+      border-radius:10px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#f0f3f1;
+    }
+    .photo-frame img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .subtle{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .stack{display:flex;flex-direction:column;gap:12px}
+    .hidden{display:none}
+    #printContainer{display:none}
+
+    @media (max-width: 760px){
+      .grid,.grid-3,.grid-4{grid-template-columns:1fr}
+      body{padding:10px}
+    }
+
+    @media print{
+      body{padding:0;background:#fff}
+      .app > *:not(#printContainer){display:none !important}
+      #printContainer{display:block !important}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <div class="toolbar-left">
+          <span class="badge" id="syncBadge">ONLINE</span>
+          <button class="btn primary small" type="button" id="saveDraftBtn">Save Draft</button>
+          <button class="btn secondary small" type="button" id="loadDraftBtn">Load Draft</button>
+          <button class="btn secondary small" type="button" id="exportWordBtn">Export Word</button>
+          <button class="btn secondary small" type="button" id="exportPdfBtn">Export PDF</button>
+          <button class="btn secondary small" type="button" id="updateAppBtn">Check for Updates</button>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn danger small" type="button" id="clearDraftBtn">Clear Draft</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Endemic Daily Bio-monitoring Report</h1>
+      <p class="help">Revised build with export formatting tuned closer to the master template and Stevenson Road report style.</p>
+    </div>
+
+    <div class="card">
+      <h2>Project Information</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="projectNameNumber">Project Name and Number</label>
+          <input id="projectNameNumber" list="projectList" autocomplete="off" />
+          <datalist id="projectList"></datalist>
+        </div>
+        <div class="field">
+          <label for="reportDate">Date</label>
+          <input id="reportDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="reportDay">Day</label>
+          <input id="reportDay" readonly />
+        </div>
+        <div class="field">
+          <label for="biomonitors">Name of Bio-monitor(s)</label>
+          <input id="biomonitors" />
+        </div>
+        <div class="field">
+          <label for="location">Location</label>
+          <input id="location" />
+        </div>
+        <div class="field">
+          <label for="locationDescription">Location Description</label>
+          <input id="locationDescription" />
+        </div>
+        <div class="field">
+          <label for="mapNumber">Map # (if applicable)</label>
+          <input id="mapNumber" />
+        </div>
+        <div class="field">
+          <label for="contractorNames">Name of Contractor(s) Performing Work</label>
+          <input id="contractorNames" />
+        </div>
+        <div class="field">
+          <label for="personsInCharge">Relevant Person(s) in Charge of Construction</label>
+          <input id="personsInCharge" />
+        </div>
+        <div class="field">
+          <label for="wetlandsPresent">Were wetlands or jurisdictional waters present on or near site?</label>
+          <select id="wetlandsPresent">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="waterBodyNames">Water Body Name(s)</label>
+          <input id="waterBodyNames" />
+        </div>
+        <div class="field">
+          <label for="watershedName">Name of Watershed</label>
+          <input id="watershedName" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Bio-monitoring Activity</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="bioStartTime">Start Time</label>
+          <input id="bioStartTime" type="text" inputmode="numeric" placeholder="0700" maxlength="4" />
+        </div>
+        <div class="field">
+          <label for="bioEndTime">End Time</label>
+          <input id="bioEndTime" type="text" inputmode="numeric" placeholder="1530" maxlength="4" />
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="bioNotes">Bio-monitoring Notes</label>
+        <textarea id="bioNotes"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Weather Conditions</h2>
+      <div class="field">
+        <label for="weatherConditions">Conditions</label>
+        <input id="weatherConditions" />
+      </div>
+      <div class="grid-4" style="margin-top:12px;">
+        <div class="field">
+          <label>Temperature, °F</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="temperatureStart" placeholder="Start" inputmode="decimal" />
+            <span aria-hidden="true">-</span>
+            <input id="temperatureEnd" placeholder="End" inputmode="decimal" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Wind Speed, MPH</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="windSpeedStart" placeholder="Start" inputmode="decimal" />
+            <span aria-hidden="true">-</span>
+            <input id="windSpeedEnd" placeholder="End" inputmode="decimal" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="humidity">Humidity</label>
+          <select id="humidity">
+            <option value=""></option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cloudCover">Cloud Cover</label>
+          <select id="cloudCover">
+            <option value=""></option>
+            <option>0-20%</option>
+            <option>20-40%</option>
+            <option>40-70%</option>
+            <option>70-100%</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Construction Activity</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="constructionStartTime">Start Time</label>
+          <input id="constructionStartTime" type="text" inputmode="numeric" placeholder="0700" maxlength="4" />
+        </div>
+        <div class="field">
+          <label for="constructionEndTime">End Time</label>
+          <input id="constructionEndTime" type="text" inputmode="numeric" placeholder="1500" maxlength="4" />
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="permitCompliance">Is project work activity compliant with applicable permits?</label>
+        <select id="permitCompliance">
+          <option value=""></option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="constructionActivities">Construction Activities Conducted / Equipment Used</label>
+        <textarea id="constructionActivities"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Biological Resources</h2>
+      <div class="field">
+        <label for="biologicalResourcesObserved">Were any special status / regulated species observed on or near site (individuals or signs)?</label>
+        <select id="biologicalResourcesObserved">
+          <option value=""></option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="section-actions" style="margin-top:12px;">
+        <button class="btn secondary small" type="button" data-add="biologicalResources">+ Add Species Observation</button>
+      </div>
+      <div class="repeat-list" id="biologicalResourcesList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Special Status / Regulated Species Take</h2>
+      <div class="field">
+        <label for="takeOccurred">Did “take” of special status / regulated species occur (“take” includes to disturb, pursue, capture, kill)?</label>
+        <select id="takeOccurred">
+          <option value=""></option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="section-actions" style="margin-top:12px;">
+        <button class="btn secondary small" type="button" data-add="takeEntries">+ Add Take Entry</button>
+      </div>
+      <div class="repeat-list" id="takeEntriesList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Roosting Bats</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="batHabitatPresent">Is roosting bat habitat present within or near the project area?</label>
+          <select id="batHabitatPresent">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="batSignsObserved">Were roosting bats or signs of roosting bats observed on or near project site?</label>
+          <select id="batSignsObserved">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="batColoniesPresent">Were any bat maternity colonies present?</label>
+          <select id="batColoniesPresent">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-actions" style="margin-top:12px;">
+        <button class="btn secondary small" type="button" data-add="roostSites">+ Add Roost Site</button>
+      </div>
+      <div class="repeat-list" id="roostSitesList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Nest Findings</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="birdNestsObserved">Were any bird nests observed on or near site?</label>
+          <select id="birdNestsObserved">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="nestBehaviorsObserved">Were nesting behaviors observed on or near site?</label>
+          <select id="nestBehaviorsObserved">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="activeNativeNestsObserved">Were any active native bird nests observed on or near site?</label>
+          <select id="activeNativeNestsObserved">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="nestAdditionalNotes">Additional Bio-monitor Notes</label>
+        <textarea id="nestAdditionalNotes"></textarea>
+      </div>
+      <div class="section-actions" style="margin-top:12px;">
+        <button class="btn secondary small" type="button" data-add="nestFindings">+ Add Nest Finding</button>
+      </div>
+      <div class="repeat-list" id="nestFindingsList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Nest Removals</h2>
+      <div class="field">
+        <label for="nestsRemoved">Were any nests removed?</label>
+        <select id="nestsRemoved">
+          <option value=""></option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="section-actions" style="margin-top:12px;">
+        <button class="btn secondary small" type="button" data-add="nestRemovals">+ Add Nest Removal</button>
+      </div>
+      <div class="repeat-list" id="nestRemovalsList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Wetlands and Jurisdictional Waters</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="wetlandsImpacted">Were wetlands or jurisdictional waters impacted by project work activity?</label>
+          <select id="wetlandsImpacted">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="wetlandsOutsideScope">Did any impacts occur outside of the scope of the designed project work activity?</label>
+          <select id="wetlandsOutsideScope">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="wetlandsImpactType">What type of impact(s) occurred (if applicable)?</label>
+        <textarea id="wetlandsImpactType"></textarea>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="wetlandsNotes">Bio-monitor Notes</label>
+        <textarea id="wetlandsNotes"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Vegetation Impacts</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="vegetationImpacted">Was vegetation impacted by project work activity?</label>
+          <select id="vegetationImpacted">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="vegetationOutsideScope">Did any impacts occur outside of the scope of the designed project work activity?</label>
+          <select id="vegetationOutsideScope">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-actions" style="margin-top:12px;">
+        <button class="btn secondary small" type="button" data-add="vegetationEntries">+ Add Vegetation Impact Area</button>
+      </div>
+      <div class="repeat-list" id="vegetationEntriesList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Non-Special Status Species</h2>
+      <div class="field">
+        <label for="birds">Birds</label>
+        <textarea id="birds"></textarea>
+      </div>
+      <div class="grid" style="margin-top:12px;">
+        <div class="field">
+          <label for="fish">Fish</label>
+          <textarea id="fish"></textarea>
+        </div>
+        <div class="field">
+          <label for="herpetofauna">Herpetofauna</label>
+          <textarea id="herpetofauna"></textarea>
+        </div>
+        <div class="field">
+          <label for="largeInvertebrates">Large Invertebrates</label>
+          <textarea id="largeInvertebrates"></textarea>
+        </div>
+        <div class="field">
+          <label for="mammals">Mammals</label>
+          <textarea id="mammals"></textarea>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="nonSpecialNotes">Bio-monitor Notes</label>
+        <textarea id="nonSpecialNotes"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Photos</h2>
+      <div class="section-actions">
+        <input id="photoUpload" type="file" accept="image/*" multiple />
+        <button class="btn secondary small" type="button" id="addPhotoGroupBtn">+ Add Photo Page Group</button>
+      </div>
+      <p class="help" style="margin-bottom:10px;">Upload photos, then assign them to photo page groups. Each group exports as a Stevenson-style photo page with 1, 2, or 4 photos and one caption.</p>
+      <div class="photo-list" id="photoGroupsList"></div>
+    </div>
+
+    <div id="printContainer"></div>
+  </div>
+
+  <script>
+    const LOGO_SRC = "logo.png";
+    const STORAGE_KEY = "endemic-biomonitor-draft-v14";
+    let LOGO_DATA_URL_CACHE = "";
+
+    const PROJECTS = [
+      {
+        projectNameNumber: "7th Street Bridge Replacement (Federal Project No. BRLS-5938 (167))",
+        location: "7th Street Bridge over the Tuolumne River in Modesto, roughly 0.5 miles east of Highway 99",
+        locationDescription: "Bridge over the Tuolumne River surrounded by riparian vegetation and an urban park",
+        contractorNames: "John Doe",
+        personsInCharge: "First Last (Title)",
+        wetlandsPresent: "Yes",
+        waterBodyNames: "Tuolumne River",
+        watershedName: "San Joaquin River Basin"
+      },
+      {
+        projectNameNumber: "Yankee Jim’s Bridge Replacement (Contract No. 001360)",
+        location: "Yankee Jim’s Road and Bridge between Colfax / I-80 and Foresthill / Foresthill Road",
+        locationDescription: "Coniferous forest and oak woodlands along roadway above a riparian corridor",
+        contractorNames: "Knight Construction Management, Flatiron-Dragados, Neils Controlled Blasting",
+        personsInCharge: "",
+        wetlandsPresent: "Yes",
+        waterBodyNames: "North Fork American River, Shirttail Creek, Bunch Creek",
+        watershedName: "American River Watershed"
+      },
+      {
+        projectNameNumber: "03-3H51U4",
+        location: "",
+        locationDescription: "",
+        contractorNames: "",
+        personsInCharge: "",
+        wetlandsPresent: "",
+        waterBodyNames: "",
+        watershedName: ""
+      }
+    ];
+
+    const state = {
+      biologicalResources: [],
+      takeEntries: [],
+      roostSites: [],
+      nestFindings: [],
+      nestRemovals: [],
+      vegetationEntries: [],
+      photos: [],
+      photoGroups: []
+    };
+
+    const repeatSchemas = {
+      biologicalResources: {
+        title: "Species Observation",
+        fields: [
+          ["time", "Time(s) of Observation"],
+          ["impacted", "Were species impacted due to work?", "select", ["", "Yes", "No"]],
+          ["outsideScope", "Did any impacts occur outside of the scope of the designed project work activity?", "select", ["", "Yes", "No"]],
+          ["speciesName", "Species Common / Scientific Name"],
+          ["individualCount", "Total number of individuals in each age-sex class"],
+          ["gps", "GPS Location (if applicable)"],
+          ["locationDescription", "Location Description", "textarea"],
+          ["observedBehavior", "Observed behavior", "textarea"],
+          ["notes", "Bio-monitor Notes", "textarea"]
+        ]
+      },
+      takeEntries: {
+        title: "Take Entry",
+        fields: [
+          ["speciesName", "Species Common Name / Scientific Name"],
+          ["takeType", "What type of take occurred?", "select", ["", "Intentional", "Incidental"]],
+          ["projectRelated", "Did take occur due to project work activity?", "select", ["", "Yes", "No"]],
+          ["outsidePermit", "Did take occur outside of the scope of the project permit(s)?", "select", ["", "Yes", "No"]],
+          ["time", "Time"],
+          ["ageClass", "Age / Class"],
+          ["sex", "Sex", "select", ["", "Female", "Male", "Unknown"]],
+          ["gps", "GPS Location of Take"],
+          ["locationDescription", "Description of Location of Take", "textarea"],
+          ["notes", "Bio-monitor Notes", "textarea"]
+        ]
+      },
+      roostSites: {
+        title: "Roost Site",
+        fields: [
+          ["time", "Time(s) of Observation"],
+          ["speciesName", "Species Common Name / Scientific Name (if identifiable)"],
+          ["gps", "GPS Location"],
+          ["roostType", "Type of Roost (Day/Night/Maternity/Wintering)", "select", ["", "Day", "Night", "Maternity", "Wintering"]],
+          ["locationDescription", "Description of Roost Location", "textarea"],
+          ["negativelyImpacted", "Was roost negatively impacted by project activity?", "select", ["", "Yes", "No"]],
+          ["notes", "Bio-monitor Notes", "textarea"]
+        ]
+      },
+      nestFindings: {
+        title: "Nest Finding",
+        fields: [
+          ["speciesName", "Species Common / Scientific Name"],
+          ["activeStatus", "Was nest / colony active or non-active?", "select", ["", "Active", "Non-Active"]],
+          ["nestingStatus", "Nesting Status (Building/Incubating/Nestlings Present)", "select", ["", "Building", "Incubating", "Nestlings Present"]],
+          ["impacted", "Were species impacted due to work?", "select", ["", "Yes", "No"]],
+          ["outsideScope", "Did any impacts occur outside of the scope of the designed project work activity?", "select", ["", "Yes", "No"]],
+          ["locationDescription", "Location Description(s)", "textarea"],
+          ["time", "Time of Observation(s)"],
+          ["gps", "GPS Location (if applicable)"],
+          ["notes", "Bio-monitor Notes", "textarea"]
+        ]
+      },
+      nestRemovals: {
+        title: "Nest Removal",
+        fields: [
+          ["speciesName", "Species Common Name / Scientific Name"],
+          ["activeStatus", "Was nest active or non-active?", "select", ["", "Active", "Non-Active"]],
+          ["nestingStatus", "Nesting Status", "select", ["", "Building", "Incubating", "Nestlings Present", "Unknown"]],
+          ["locationDescription", "Location Description", "textarea"],
+          ["gps", "GPS Location"],
+          ["notes", "Bio-monitor Notes", "textarea"],
+          ["additionalNotes", "Additional Notes", "textarea"]
+        ]
+      },
+      vegetationEntries: {
+        title: "Vegetation Impact Area",
+        fields: [
+          ["habitatType", "Habitat Type", "textarea"],
+          ["vegetationType", "Type of Vegetation Impacted", "textarea"],
+          ["temporaryPermanent", "Was impact temporary or permanent?", "select", ["", "Temporary", "Permanent"]],
+          ["impactDescription", "Description of Impact(s)", "textarea"],
+          ["squareFootage", "Square Footage of Impacted Area"],
+          ["gps", "GPS Location"],
+          ["notes", "Bio-monitor Notes", "textarea"]
+        ]
+      }
+    };
+
+    function $(id){ return document.getElementById(id); }
+
+    function esc(value){
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function blobToDataURL(blob){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function getLogoDataUrl(){
+      if (LOGO_DATA_URL_CACHE) return LOGO_DATA_URL_CACHE;
+      try {
+        const response = await fetch(LOGO_SRC);
+        const blob = await response.blob();
+        LOGO_DATA_URL_CACHE = await blobToDataURL(blob);
+        return LOGO_DATA_URL_CACHE;
+      } catch (err) {
+        console.warn("Could not load logo as data URL", err);
+        return LOGO_SRC;
+      }
+    }
+
+    function updateSyncBadge(){
+      const badge = $("syncBadge");
+      if (navigator.onLine) {
+        badge.textContent = "ONLINE";
+        badge.className = "badge";
+      } else {
+        badge.textContent = "OFFLINE";
+        badge.className = "badge offline";
+      }
+    }
+
+    function updateDayFromDate(){
+      const value = $("reportDate").value;
+      if (!value) {
+        $("reportDay").value = "";
+        return;
+      }
+      const d = new Date(value + "T12:00:00");
+      if (Number.isNaN(d.getTime())) return;
+      $("reportDay").value = d.toLocaleDateString("en-US", { weekday: "long" });
+    }
+
+    function normalizeMilitaryTime(value){
+      if (!value) return "";
+      let raw = String(value).trim();
+      raw = raw.replace(/[^\dapm: ]/gi, "").toLowerCase();
+
+      if (/^\d{4}$/.test(raw)) {
+        const hh = parseInt(raw.slice(0, 2), 10);
+        const mm = parseInt(raw.slice(2, 4), 10);
+        if (hh <= 23 && mm <= 59) return raw;
+      }
+
+      if (/^\d{2}:\d{2}$/.test(raw)) {
+        const hh = parseInt(raw.slice(0, 2), 10);
+        const mm = parseInt(raw.slice(3, 5), 10);
+        if (hh <= 23 && mm <= 59) return raw.replace(":", "");
+      }
+
+      const match = raw.match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/);
+      if (!match) return raw;
+
+      let hh = parseInt(match[1], 10);
+      let mm = parseInt(match[2] || "00", 10);
+      const ap = match[3];
+
+      if (ap === "pm" && hh < 12) hh += 12;
+      if (ap === "am" && hh === 12) hh = 0;
+      if (hh > 23) hh = 23;
+      if (mm > 59) mm = 59;
+
+      return String(hh).padStart(2, "0") + String(mm).padStart(2, "0");
+    }
+
+    function normalizeTypedTimeField(id){
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("blur", () => {
+        el.value = normalizeMilitaryTime(el.value);
+      });
+    }
+
+    function formatDisplayDate(isoDate){
+      if (!isoDate) return "";
+      const d = new Date(isoDate + "T12:00:00");
+      if (Number.isNaN(d.getTime())) return isoDate;
+      return d.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+    }
+
+    function formatDecimalDegrees(lat, lon){
+      return `${Number(lat).toFixed(6)}, ${Number(lon).toFixed(6)}`;
+    }
+
+    function getCurrentPositionPromise(options = {}){
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocation is not supported on this device/browser."));
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+          ...options
+        });
+      });
+    }
+
+    async function fillGpsField(targetInput, button){
+      if (!targetInput) return;
+
+      const originalLabel = button ? button.textContent : "";
+      try {
+        if (button) {
+          button.disabled = true;
+          button.textContent = "…";
+        }
+
+        const pos = await getCurrentPositionPromise();
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        targetInput.value = formatDecimalDegrees(lat, lon);
+        targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+      } catch (err) {
+        let message = "Unable to get GPS location.";
+        if (err && err.code === 1) message = "Location permission was denied.";
+        if (err && err.code === 2) message = "Location is unavailable.";
+        if (err && err.code === 3) message = "Location request timed out.";
+        alert(message);
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalLabel || "📍";
+        }
+      }
+    }
+
+    function projectMatch(name){
+      const needle = (name || "").trim().toLowerCase();
+      return PROJECTS.find(p => p.projectNameNumber.toLowerCase() === needle)
+        || PROJECTS.find(p => p.projectNameNumber.toLowerCase().includes(needle));
+    }
+
+    function fillProjectDatalist(){
+      const list = $("projectList");
+      list.innerHTML = "";
+      PROJECTS.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.projectNameNumber;
+        list.appendChild(option);
+      });
+    }
+
+    function applyProjectAutofill(){
+      const match = projectMatch($("projectNameNumber").value);
+      if (!match) return;
+      $("location").value = match.location || $("location").value;
+      $("locationDescription").value = match.locationDescription || $("locationDescription").value;
+      $("contractorNames").value = match.contractorNames || $("contractorNames").value;
+      $("personsInCharge").value = match.personsInCharge || $("personsInCharge").value;
+      $("wetlandsPresent").value = match.wetlandsPresent || $("wetlandsPresent").value;
+      $("waterBodyNames").value = match.waterBodyNames || $("waterBodyNames").value;
+      $("watershedName").value = match.watershedName || $("watershedName").value;
+    }
+
+    function addRepeatItem(key, values){
+      state[key].push(values || {});
+      renderRepeatList(key);
+    }
+
+    function duplicateRepeatItem(key, index){
+      const copy = JSON.parse(JSON.stringify(state[key][index] || {}));
+      state[key].splice(index + 1, 0, copy);
+      renderRepeatList(key);
+    }
+
+    function removeRepeatItem(key, index){
+      state[key].splice(index, 1);
+      renderRepeatList(key);
+    }
+
+    function renderRepeatList(key){
+      const list = $(key + "List");
+      const schema = repeatSchemas[key];
+      list.innerHTML = "";
+
+      state[key].forEach((item, idx) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "repeat-item";
+
+        const head = document.createElement("div");
+        head.className = "repeat-head";
+        head.innerHTML = `
+          <strong>${schema.title} ${idx + 1}</strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn secondary small" type="button">Duplicate</button>
+            <button class="btn danger small" type="button">Remove</button>
+          </div>
+        `;
+        const btns = head.querySelectorAll("button");
+        btns[0].addEventListener("click", () => duplicateRepeatItem(key, idx));
+        btns[1].addEventListener("click", () => removeRepeatItem(key, idx));
+        wrapper.appendChild(head);
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        schema.fields.forEach(field => {
+          const [name, label, type, options] = field;
+          const fieldWrap = document.createElement("div");
+          fieldWrap.className = "field";
+          if (type === "textarea") fieldWrap.classList.add("full");
+
+          const labelEl = document.createElement("label");
+          labelEl.textContent = label;
+          fieldWrap.appendChild(labelEl);
+
+          let input;
+          if (type === "textarea") {
+            input = document.createElement("textarea");
+          } else if (type === "select") {
+            input = document.createElement("select");
+            (options || []).forEach(opt => {
+              const option = document.createElement("option");
+              option.value = opt;
+              option.textContent = opt;
+              input.appendChild(option);
+            });
+          } else {
+            input = document.createElement("input");
+          }
+
+          input.value = item[name] || "";
+          input.addEventListener("input", () => { item[name] = input.value; });
+          if (name === "time") {
+            input.setAttribute("inputmode", "numeric");
+            input.setAttribute("placeholder", "1400");
+            input.setAttribute("maxlength", "4");
+            input.addEventListener("blur", () => {
+              item[name] = normalizeMilitaryTime(input.value);
+              input.value = item[name];
+            });
+          }
+
+          if (name === "gps") {
+            const inputRow = document.createElement("div");
+            inputRow.className = "input-with-action";
+
+            const gpsBtn = document.createElement("button");
+            gpsBtn.type = "button";
+            gpsBtn.className = "gps-btn";
+            gpsBtn.textContent = "📍";
+            gpsBtn.title = "Use current GPS location";
+            gpsBtn.setAttribute("aria-label", "Use current GPS location");
+            gpsBtn.addEventListener("click", () => fillGpsField(input, gpsBtn));
+
+            inputRow.appendChild(input);
+            inputRow.appendChild(gpsBtn);
+            fieldWrap.appendChild(inputRow);
+          } else {
+            fieldWrap.appendChild(input);
+          }
+          grid.appendChild(fieldWrap);
+        });
+
+        wrapper.appendChild(grid);
+        list.appendChild(wrapper);
+      });
+    }
+
+    function addPhotoFromFile(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.photos.push({
+          id: "photo_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9),
+          name: file.name,
+          src: reader.result
+        });
+        if (!state.photoGroups.length) addPhotoGroup();
+        renderPhotoGroups();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function addPhotoGroup(values){
+      state.photoGroups.push(Object.assign({
+        title: "",
+        caption: "",
+        photoIds: []
+      }, values || {}));
+      renderPhotoGroups();
+    }
+
+    function duplicatePhotoGroup(index){
+      const copy = JSON.parse(JSON.stringify(state.photoGroups[index] || {}));
+      state.photoGroups.splice(index + 1, 0, copy);
+      renderPhotoGroups();
+    }
+
+    function removePhotoGroup(index){
+      state.photoGroups.splice(index, 1);
+      renderPhotoGroups();
+    }
+
+    function renderPhotoGroups(){
+      const list = $("photoGroupsList");
+      list.innerHTML = "";
+
+      if (!state.photoGroups.length) {
+        const p = document.createElement("p");
+        p.className = "subtle";
+        p.textContent = "No photo page groups yet.";
+        list.appendChild(p);
+        return;
+      }
+
+      state.photoGroups.forEach((group, idx) => {
+        const card = document.createElement("div");
+        card.className = "photo-card";
+
+        const selected = state.photos.filter(photo => (group.photoIds || []).includes(photo.id));
+
+        card.innerHTML = `
+          <div class="repeat-head">
+            <strong>Photo Page Group ${idx + 1}</strong>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn secondary small" type="button" data-action="duplicate">Duplicate</button>
+              <button class="btn danger small" type="button" data-action="remove">Remove</button>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="grid">
+              <div class="field">
+                <label>Optional group title</label>
+                <input type="text" data-role="title" value="${esc(group.title).replace(/&quot;/g,'"')}" />
+              </div>
+              <div class="field">
+                <label>Photos on this page</label>
+                <select multiple size="${Math.max(4, Math.min(8, state.photos.length || 4))}" data-role="select"></select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Shared caption under this photo set</label>
+              <textarea data-role="caption">${esc(group.caption).replace(/&quot;/g,'"')}</textarea>
+            </div>
+            <div class="subtle">Recommended: use 1, 2, or 4 photos in a group to match the Stevenson-style layout.</div>
+            <div class="photo-preview-grid" data-role="preview"></div>
+          </div>
+        `;
+
+        card.querySelector('[data-action="duplicate"]').addEventListener("click", () => duplicatePhotoGroup(idx));
+        card.querySelector('[data-action="remove"]').addEventListener("click", () => removePhotoGroup(idx));
+
+        const titleInput = card.querySelector('[data-role="title"]');
+        titleInput.addEventListener("input", () => { group.title = titleInput.value; });
+
+        const captionInput = card.querySelector('[data-role="caption"]');
+        captionInput.addEventListener("input", () => { group.caption = captionInput.value; });
+
+        const select = card.querySelector('[data-role="select"]');
+        state.photos.forEach(photo => {
+          const opt = document.createElement("option");
+          opt.value = photo.id;
+          opt.textContent = photo.name || photo.id;
+          opt.selected = (group.photoIds || []).includes(photo.id);
+          select.appendChild(opt);
+        });
+        select.addEventListener("change", () => {
+          group.photoIds = Array.from(select.selectedOptions).map(opt => opt.value);
+          renderPhotoGroups();
+        });
+
+        const preview = card.querySelector('[data-role="preview"]');
+        selected.forEach(photo => {
+          const frame = document.createElement("div");
+          frame.className = "photo-frame";
+          frame.innerHTML = `<img src="${photo.src}" alt="${esc(photo.name || 'photo')}">`;
+          preview.appendChild(frame);
+        });
+
+        list.appendChild(card);
+      });
+    }
+
+    function getFormData(){
+      return {
+        projectNameNumber: $("projectNameNumber").value,
+        reportDate: $("reportDate").value,
+        reportDay: $("reportDay").value,
+        biomonitors: $("biomonitors").value,
+        location: $("location").value,
+        locationDescription: $("locationDescription").value,
+        mapNumber: $("mapNumber").value,
+        contractorNames: $("contractorNames").value,
+        personsInCharge: $("personsInCharge").value,
+        wetlandsPresent: $("wetlandsPresent").value,
+        waterBodyNames: $("waterBodyNames").value,
+        watershedName: $("watershedName").value,
+
+        bioStartTime: $("bioStartTime").value,
+        bioEndTime: $("bioEndTime").value,
+        bioNotes: $("bioNotes").value,
+
+        weatherConditions: $("weatherConditions").value,
+        temperatureStart: $("temperatureStart").value,
+        temperatureEnd: $("temperatureEnd").value,
+        windSpeedStart: $("windSpeedStart").value,
+        windSpeedEnd: $("windSpeedEnd").value,
+        humidity: $("humidity").value,
+        cloudCover: $("cloudCover").value,
+
+        constructionStartTime: $("constructionStartTime").value,
+        constructionEndTime: $("constructionEndTime").value,
+        permitCompliance: $("permitCompliance").value,
+        constructionActivities: $("constructionActivities").value,
+
+        biologicalResourcesObserved: $("biologicalResourcesObserved").value,
+        takeOccurred: $("takeOccurred").value,
+
+        batHabitatPresent: $("batHabitatPresent").value,
+        batSignsObserved: $("batSignsObserved").value,
+        batColoniesPresent: $("batColoniesPresent").value,
+
+        birdNestsObserved: $("birdNestsObserved").value,
+        nestBehaviorsObserved: $("nestBehaviorsObserved").value,
+        activeNativeNestsObserved: $("activeNativeNestsObserved").value,
+        nestAdditionalNotes: $("nestAdditionalNotes").value,
+
+        nestsRemoved: $("nestsRemoved").value,
+
+        wetlandsImpacted: $("wetlandsImpacted").value,
+        wetlandsOutsideScope: $("wetlandsOutsideScope").value,
+        wetlandsImpactType: $("wetlandsImpactType").value,
+        wetlandsNotes: $("wetlandsNotes").value,
+
+        vegetationImpacted: $("vegetationImpacted").value,
+        vegetationOutsideScope: $("vegetationOutsideScope").value,
+
+        birds: $("birds").value,
+        fish: $("fish").value,
+        herpetofauna: $("herpetofauna").value,
+        largeInvertebrates: $("largeInvertebrates").value,
+        mammals: $("mammals").value,
+        nonSpecialNotes: $("nonSpecialNotes").value,
+
+        biologicalResources: state.biologicalResources,
+        takeEntries: state.takeEntries,
+        roostSites: state.roostSites,
+        nestFindings: state.nestFindings,
+        nestRemovals: state.nestRemovals,
+        vegetationEntries: state.vegetationEntries,
+        photos: state.photos,
+        photoGroups: state.photoGroups
+      };
+    }
+
+    function applyFormData(data){
+      if (!data) return;
+      Object.keys(data).forEach(key => {
+        const el = $(key);
+        if (el && typeof data[key] !== "object") el.value = data[key] || "";
+      });
+
+      state.biologicalResources = data.biologicalResources || [];
+      state.takeEntries = data.takeEntries || [];
+      state.roostSites = data.roostSites || [];
+      state.nestFindings = data.nestFindings || [];
+      state.nestRemovals = data.nestRemovals || [];
+      state.vegetationEntries = data.vegetationEntries || [];
+      state.photos = data.photos || [];
+      state.photoGroups = data.photoGroups || [];
+
+      $("temperatureStart").value = data.temperatureStart || "";
+      $("temperatureEnd").value = data.temperatureEnd || "";
+      $("windSpeedStart").value = data.windSpeedStart || "";
+      $("windSpeedEnd").value = data.windSpeedEnd || "";
+
+      if (state.photos.length && !state.photoGroups.length) {
+        state.photoGroups = [{ title:"", caption:"", photoIds: state.photos.slice(0,4).map(p => p.id) }];
+      }
+
+      Object.keys(repeatSchemas).forEach(renderRepeatList);
+      renderPhotoGroups();
+      updateDayFromDate();
+    }
+
+    function saveDraft(){
+      updateDayFromDate();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(getFormData()));
+      alert("Draft saved.");
+    }
+
+    function loadDraft(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        alert("No saved draft found.");
+        return;
+      }
+      applyFormData(JSON.parse(raw));
+      alert("Draft loaded.");
+    }
+
+    function clearDraft(){
+      if (!confirm("Clear the saved draft and reset the form?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+
+    function splitParagraphs(text){
+      const clean = String(text || "").trim();
+      if (!clean) return [];
+      return clean.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+    }
+
+    function paraBlocks(text){
+      return splitParagraphs(text).map(p => `<p>${esc(p).replace(/\n/g,"<br>")}</p>`).join("");
+    }
+
+    function bulletOrParagraphBlocks(text){
+      const chunks = splitParagraphs(text);
+      if (!chunks.length) return "";
+      const looksBulleted = chunks.every(chunk => /^[-•●]/.test(chunk.trim()));
+      if (looksBulleted) {
+        return `<ul>${chunks.map(chunk => `<li>${esc(chunk.replace(/^[-•●]\s*/, "")).replace(/\n/g, "<br>")}</li>`).join("")}</ul>`;
+      }
+      return chunks.map(chunk => `<p>${esc(chunk).replace(/\n/g,"<br>")}</p>`).join("");
+    }
+
+    function line(label, value){
+      return `<p><strong>${esc(label)}</strong> ${esc(value || "")}</p>`;
+    }
+
+    function lineMaybe(label, value, fallback){
+      return `<p><strong>${esc(label)}</strong> ${esc(value || fallback || "")}</p>`;
+    }
+
+    function yesNoLine(question, value){
+      return `<p><strong>${esc(question)}</strong> ${esc(value || "")}</p>`;
+    }
+
+    function fieldBlock(label, value){
+      if (!String(value || "").trim()) return "";
+      return `<p><strong>${esc(label)}</strong> ${esc(value)}</p>`;
+    }
+
+    function renderEntryBlock(entry, labels){
+      return labels.map(def => {
+        const [key, label] = def;
+        let value = entry[key] || "";
+        if (key === "time") value = normalizeMilitaryTime(value);
+        if (String(value).trim() === "") return "";
+        return `<p><strong>${esc(label)}</strong> ${esc(value)}</p>`;
+      }).join("");
+    }
+
+    function buildSectionEntryBlocks(entries, renderFn, emptyFn){
+      if (!entries.length) return emptyFn ? emptyFn() : "";
+      return entries.map((entry, idx) => `<div class="entry-block keep-together${idx ? ' entry-gap' : ''}">${renderFn(entry)}</div>`).join("");
+    }
+
+    function getSelectedPhotosByGroup(group){
+      return (group.photoIds || []).map(id => state.photos.find(photo => photo.id === id)).filter(Boolean);
+    }
+
+    function photoGridClass(count){
+      if (count <= 1) return "photo-grid single";
+      if (count === 2) return "photo-grid two";
+      return "photo-grid four";
+    }
+
+    function renderPhotoGroupsForExport(groups){
+      if (!groups.length) {
+        return `
+          <div class="photo-page">
+            <div class="photo-page-header">
+              <img src="${LOGO_DATA_URL_CACHE || LOGO_SRC}" alt="Endemic logo">
+              <div class="photo-page-org">Endemic Environmental Services</div>
+              <hr class="photo-page-rule">
+              <div class="photo-page-title">Photos</div>
+            </div>
+            <p><strong>Figure 1.</strong> </p>
+          </div>
+        `;
+      }
+
+      return groups.map((group, index) => {
+        const photos = getSelectedPhotosByGroup(group).slice(0, 4);
+        const captionNumber = index + 1;
+        const imageHtml = photos.map(photo => `
+          <div class="photo-cell">
+            <img src="${photo.src}" alt="Photo ${captionNumber}">
+          </div>
+        `).join("");
+
+        return `
+          <div class="photo-page ${index ? 'page-break-before' : ''}">
+            <div class="photo-page-header">
+              <img src="${LOGO_DATA_URL_CACHE || LOGO_SRC}" alt="Endemic logo">
+              <div class="photo-page-org">Endemic Environmental Services</div>
+              <hr class="photo-page-rule">
+              <div class="photo-page-title">Photos</div>
+            </div>
+            ${group.title ? `<p class="photo-group-title">${esc(group.title)}</p>` : ""}
+            <div class="${photoGridClass(photos.length)}">
+              ${imageHtml || '<div class="photo-cell empty"></div>'}
+            </div>
+            <p class="figure-caption"><strong>Figure ${captionNumber}.</strong> ${esc(group.caption || "")}</p>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function buildReportHtml(forWord){
+      const d = getFormData();
+      const reportDate = formatDisplayDate(d.reportDate);
+      const reportDay = d.reportDay || "";
+      const bioStart = normalizeMilitaryTime(d.bioStartTime);
+      const bioEnd = normalizeMilitaryTime(d.bioEndTime);
+      const conStart = normalizeMilitaryTime(d.constructionStartTime);
+      const conEnd = normalizeMilitaryTime(d.constructionEndTime);
+      const tempRange = [d.temperatureStart, d.temperatureEnd].filter(Boolean).join(" - ");
+      const windRange = [d.windSpeedStart, d.windSpeedEnd].filter(Boolean).join(" - ");
+      const logoDataUrl = await getLogoDataUrl();
+      LOGO_DATA_URL_CACHE = logoDataUrl;
+
+      const exportLogoSrc = logoDataUrl;
+
+      const reportCss = `
+        <style>
+          @page{
+            size:8.5in 11in;
+            margin:0.7in 0.75in 0.75in 0.75in;
+          }
+          body{
+            font-family:'Times New Roman',Times,serif;
+            font-size:11pt;
+            line-height:1.3;
+            color:#000;
+            margin:0;
+            background:#fff;
+          }
+          .doc{
+            max-width:7in;
+            margin:0 auto;
+          }
+          .section-page{
+            page-break-after:always;
+            break-after:page;
+          }
+          .section-page:last-child{
+            page-break-after:auto;
+            break-after:auto;
+          }
+          .hdr{
+            text-align:center;
+            margin-bottom:16pt;
+          }
+          .hdr img{
+            width:0.42in;
+            height:auto;
+            display:block;
+            margin:0 auto 4pt auto;
+          }
+          .org{
+            font-family:Cambria,'Times New Roman',Times,serif;
+            font-size:15pt;
+            margin:0 0 2pt 0;
+          }
+          .title{
+            font-family:'Times New Roman',Times,serif;
+            font-size:15pt;
+            font-weight:bold;
+            text-transform:uppercase;
+            margin:0 0 14pt 0;
+          }
+          .meta{
+            width:100%;
+            margin-bottom:10pt;
+          }
+          .left{
+            float:left;
+            width:48%;
+          }
+          .right{
+            float:right;
+            width:48%;
+            text-align:left;
+          }
+          .clear{clear:both}
+          h2{
+            font-size:13pt;
+            font-weight:bold;
+            color:#000;
+            margin:16pt 0 8pt 0;
+          }
+          p{
+            margin:0 0 6pt 0;
+          }
+          ul{
+            margin:0 0 6pt 18pt;
+            padding:0;
+          }
+          li{
+            margin:0 0 6pt 0;
+          }
+          .weather-grid{
+            width:100%;
+            border-collapse:collapse;
+            margin:6pt 0 10pt 0;
+          }
+          .weather-grid td{
+            width:25%;
+            vertical-align:top;
+            padding-right:10pt;
+          }
+          .weather-label{
+            font-weight:bold;
+            margin-bottom:2pt;
+          }
+          .entry-block{
+            margin:0 0 10pt 0;
+          }
+          .entry-gap{
+            margin-top:10pt;
+            padding-top:2pt;
+          }
+          .keep-together{
+            page-break-inside:avoid;
+            break-inside:avoid;
+          }
+          .photo-page{
+            page-break-before:always;
+            break-before:page;
+          }
+          .photo-page-header{
+            text-align:center;
+            margin-bottom:12pt;
+          }
+          .photo-page-header img{
+            width:0.42in;
+            height:auto;
+            display:block;
+            margin:0 auto 4pt auto;
+          }
+          .photo-page-org{
+            font-family:Cambria,'Times New Roman',Times,serif;
+            font-size:14pt;
+            margin:0 0 6pt 0;
+          }
+          .photo-page-rule{
+            border:none;
+            border-top:3px solid #6d2c2c;
+            margin:0 0 10pt 0;
+          }
+          .photo-page-title{
+            font-family:'Times New Roman',Times,serif;
+            text-align:center;
+            font-size:16pt;
+            font-weight:bold;
+            text-decoration:underline;
+            margin:0 0 14pt 0;
+          }
+          .photo-group-title{
+            text-align:center;
+            font-weight:bold;
+            margin:0 0 10pt 0;
+          }
+          .photo-grid{
+            display:grid;
+            gap:8pt;
+            width:100%;
+            margin:0 auto 8pt auto;
+          }
+          .photo-grid.single{grid-template-columns:1fr}
+          .photo-grid.two{grid-template-columns:1fr 1fr}
+          .photo-grid.four{grid-template-columns:1fr 1fr}
+          .photo-cell{border:none}
+          .photo-cell img{
+            width:100%;
+            height:auto;
+            display:block;
+            object-fit:cover;
+          }
+          .photo-grid.single .photo-cell img{max-height:6.8in;object-fit:contain}
+          .photo-grid.two .photo-cell img{aspect-ratio:4/3}
+          .photo-grid.four .photo-cell img{aspect-ratio:4/3}
+          .figure-caption{
+            text-align:center;
+            margin-top:4pt;
+          }
+        </style>
+      `;
+
+      const biologicalResourcesHtml = buildSectionEntryBlocks(
+        d.biologicalResources,
+        entry => renderEntryBlock(entry, [
+          ["time", "Time(s) of Observation:"],
+          ["impacted", "Were species impacted due to work?"],
+          ["outsideScope", "Did any impacts occur outside of the scope of the designed project work activity?"],
+          ["speciesName", "Species Common / Scientific Name:"],
+          ["individualCount", "Total number of individuals in each age-sex class:"],
+          ["gps", "GPS Location (if applicable):"],
+          ["locationDescription", "Location Description:"],
+          ["observedBehavior", "Observed behavior:"],
+          ["notes", "Bio-monitor Notes:"]
+        ]),
+        () => `
+          ${lineMaybe("Time(s) of Observation:", "", "")}
+          ${lineMaybe("Were species impacted due to work?", "", "")}
+          ${lineMaybe("Did any impacts occur outside of the scope of the designed project work activity?", "", "")}
+          ${lineMaybe("Species Common / Scientific Name:", "", "")}
+          ${lineMaybe("Total number of individuals in each age-sex class:", "", "")}
+          ${lineMaybe("GPS Location (if applicable):", "", "")}
+          ${lineMaybe("Location Description:", "", "")}
+          ${lineMaybe("Observed behavior:", "", "")}
+          ${lineMaybe("Bio-monitor Notes:", "", "")}
+        `
+      );
+
+      const takeEntriesHtml = buildSectionEntryBlocks(
+        d.takeEntries,
+        entry => renderEntryBlock(entry, [
+          ["speciesName", "Species Common Name / Scientific Name:"],
+          ["takeType", "What type of take occurred?"],
+          ["projectRelated", "Did take occur due to project work activity?"],
+          ["outsidePermit", "Did take occur outside of the scope of the project permit(s)?"],
+          ["time", "Time:"],
+          ["ageClass", "Age / Class:"],
+          ["sex", "Sex:"],
+          ["gps", "GPS Location of Take:"],
+          ["locationDescription", "Description of Location of Take:"],
+          ["notes", "Bio-monitor Notes:"]
+        ]),
+        () => `
+          ${lineMaybe("Species Common Name / Scientific Name:", "", "")}
+          ${lineMaybe("What type of take occurred?", "", "")}
+          ${lineMaybe("Did take occur due to project work activity?", "", "")}
+          ${lineMaybe("Did take occur outside of the scope of the project permit(s)?", "", "")}
+          ${lineMaybe("Time:", "", "")}
+          ${lineMaybe("Age / Class:", "", "")}
+          ${lineMaybe("Sex:", "", "")}
+          ${lineMaybe("GPS Location of Take:", "", "")}
+          ${lineMaybe("Description of Location of Take:", "", "")}
+          ${lineMaybe("Bio-monitor Notes:", "", "")}
+        `
+      );
+
+      const roostSitesHtml = buildSectionEntryBlocks(
+        d.roostSites,
+        entry => renderEntryBlock(entry, [
+          ["time", "Time(s) of Observation:"],
+          ["speciesName", "Species Common Name / Scientific Name (if identifiable):"],
+          ["gps", "GPS Location:"],
+          ["roostType", "Type of Roost (Day/Night/Maternity/Wintering):"],
+          ["locationDescription", "Description of Roost Location:"],
+          ["negativelyImpacted", "Was roost negatively impacted by project activity?"],
+          ["notes", "Bio-monitor Notes:"]
+        ]),
+        () => `
+          ${lineMaybe("Time(s) of Observation:", "", "")}
+          ${lineMaybe("Species Common Name / Scientific Name (if identifiable):", "", "")}
+          ${lineMaybe("GPS Location:", "", "")}
+          ${lineMaybe("Type of Roost (Day/Night/Maternity/Wintering):", "", "")}
+          ${lineMaybe("Description of Roost Location:", "", "")}
+          ${lineMaybe("Was roost negatively impacted by project activity?", "", "")}
+          ${lineMaybe("Bio-monitor Notes:", "", "")}
+        `
+      );
+
+      const nestFindingsHtml = buildSectionEntryBlocks(
+        d.nestFindings,
+        entry => renderEntryBlock(entry, [
+          ["speciesName", "Species Common / Scientific Name:"],
+          ["activeStatus", "Was nest active or non-active?"],
+          ["nestingStatus", "Nesting Status:"],
+          ["locationDescription", "Location Description(s):"],
+          ["time", "Time of Observation(s):"],
+          ["gps", "GPS Location:"],
+          ["notes", "Bio-monitor Notes:"]
+        ]),
+        () => `
+          ${lineMaybe("Species Common / Scientific Name:", "", "")}
+          ${lineMaybe("Was nest active or non-active?", "", "")}
+          ${lineMaybe("Nesting Status:", "", "")}
+          ${lineMaybe("Location Description(s):", "", "")}
+          ${lineMaybe("Time of Observation(s):", "", "")}
+          ${lineMaybe("GPS Location:", "", "")}
+          ${lineMaybe("Bio-monitor Notes:", "", "")}
+        `
+      );
+
+      const nestRemovalsHtml = buildSectionEntryBlocks(
+        d.nestRemovals,
+        entry => renderEntryBlock(entry, [
+          ["speciesName", "Species Common Name / Scientific Name:"],
+          ["activeStatus", "Was nest active or non-active?"],
+          ["nestingStatus", "Nesting Status:"],
+          ["locationDescription", "Location Description:"],
+          ["gps", "GPS Location:"],
+          ["notes", "Bio-monitor Notes:"],
+          ["additionalNotes", "Additional Notes:"]
+        ]),
+        () => `
+          ${lineMaybe("Species Common Name / Scientific Name:", "", "")}
+          ${lineMaybe("Was nest active or non-active?", "", "")}
+          ${lineMaybe("Nesting Status:", "", "")}
+          ${lineMaybe("Location Description:", "", "")}
+          ${lineMaybe("GPS Location:", "", "")}
+          ${lineMaybe("Bio-monitor Notes:", "", "")}
+          ${lineMaybe("Additional Notes:", "", "")}
+        `
+      );
+
+      const vegetationEntriesHtml = buildSectionEntryBlocks(
+        d.vegetationEntries,
+        entry => renderEntryBlock(entry, [
+          ["habitatType", "Habitat Type:"],
+          ["vegetationType", "Type of Vegetation Impacted:"],
+          ["temporaryPermanent", "Was impact temporary or permanent?"],
+          ["impactDescription", "Description of Impact(s):"],
+          ["squareFootage", "Square Footage of Impacted Area:"],
+          ["gps", "GPS Location:"],
+          ["notes", "Bio-monitor Notes:"]
+        ]),
+        () => `
+          ${lineMaybe("Habitat Type:", "", "")}
+          ${lineMaybe("Type of Vegetation Impacted:", "", "")}
+          ${lineMaybe("Was impact temporary or permanent?", "", "")}
+          ${lineMaybe("Description of Impact(s):", "", "")}
+          ${lineMaybe("Square Footage of Impacted Area:", "", "")}
+          ${lineMaybe("GPS Location:", "", "")}
+          ${lineMaybe("Bio-monitor Notes:", "", "")}
+        `
+      );
+
+      const photoGroups = (d.photoGroups || []).filter(group => (group.photoIds || []).length);
+
+      const reportHeaderHtml = () => `
+        <div class="hdr keep-together">
+          <img src="${exportLogoSrc}" alt="Endemic logo">
+          <div class="org">Endemic Environmental Services</div>
+          <div class="title">Daily Bio-monitoring Report</div>
+        </div>
+      `;
+
+      const sectionPage = content => `
+        <div class="section-page">
+          ${reportHeaderHtml()}
+          ${content}
+        </div>
+      `;
+
+      const html = `
+        ${forWord ? '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Daily Bio-monitoring Report</title>' + reportCss + '</head><body>' : reportCss}
+        <div class="doc">
+          ${sectionPage(`
+            <div class="meta keep-together">
+              <div class="left"><strong>Date:</strong> ${esc(reportDate)}</div>
+              <div class="right"><strong>Day:</strong> ${esc(reportDay)}</div>
+              <div class="clear"></div>
+            </div>
+            ${line("Project Name and Number:", d.projectNameNumber)}
+            ${line("Name of Bio-monitor(s):", d.biomonitors)}
+            ${line("Location:", d.location)}
+            ${line("Location Description:", d.locationDescription)}
+            ${line("Map # (if applicable):", d.mapNumber)}
+            <h2>Bio-monitoring Activity</h2>
+            <div class="meta keep-together">
+              <div class="left"><strong>Start Time:</strong> ${esc(bioStart)}</div>
+              <div class="right"><strong>End Time:</strong> ${esc(bioEnd)}</div>
+              <div class="clear"></div>
+            </div>
+            <p><strong>Bio-monitoring Notes:</strong></p>
+            ${bulletOrParagraphBlocks(d.bioNotes)}
+          `)}
+
+          ${sectionPage(`
+            <h2>Weather Conditions</h2>
+            ${line("Conditions:", d.weatherConditions)}
+            <table class="weather-grid">
+              <tr>
+                <td><div class="weather-label">Temperature, °F</div><div>${esc(tempRange)}</div></td>
+                <td><div class="weather-label">Wind Speed, MPH</div><div>${esc(windRange)}</div></td>
+                <td><div class="weather-label">Humidity</div><div>${esc(d.humidity)}</div></td>
+                <td><div class="weather-label">Cloud Cover</div><div>${esc(d.cloudCover)}</div></td>
+              </tr>
+            </table>
+            <h2>Construction Activity</h2>
+            ${line("Name of Contractor(s) Performing Work:", d.contractorNames)}
+            ${line("Relevant Person(s) in Charge of Construction:", d.personsInCharge)}
+            <div class="meta keep-together">
+              <div class="left"><strong>Start Time:</strong> ${esc(conStart)}</div>
+              <div class="right"><strong>End Time:</strong> ${esc(conEnd)}</div>
+              <div class="clear"></div>
+            </div>
+            ${line("Is project work activity compliant with applicable permits?", d.permitCompliance)}
+            <p><strong>Construction Activities Conducted / Equipment Used:</strong></p>
+            ${bulletOrParagraphBlocks(d.constructionActivities)}
+          `)}
+
+          ${sectionPage(`
+            <h2>Biological Resources</h2>
+            ${yesNoLine("Were any special status / regulated species observed on or near site (individuals or signs)?", d.biologicalResourcesObserved || (d.biologicalResources.length ? (d.biologicalResources.some(entry => String(entry.speciesName || '').trim()) ? 'Yes' : '') : 'No'))}
+            <p><strong>If yes, then for each species detected:</strong></p>
+            ${biologicalResourcesHtml}
+          `)}
+
+          ${sectionPage(`
+            <h2>Special Status / Regulated Species Take</h2>
+            ${yesNoLine("Did “take” of special status / regulated species occur (“take” includes to disturb, pursue, capture, kill)?", d.takeOccurred)}
+            <p><strong>If yes, then for each take of special status / regulated species that occurred:</strong></p>
+            ${takeEntriesHtml}
+          `)}
+
+          ${sectionPage(`
+            <h2>Roosting Bats</h2>
+            ${yesNoLine("Is roosting bat habitat present within or near the project area?", d.batHabitatPresent)}
+            <p><strong>Project’s typical bat maternity season:</strong> April 1st – August 31st</p>
+            ${yesNoLine("Were roosting bats or signs of roosting bats observed on or near project site?", d.batSignsObserved)}
+            ${yesNoLine("Were any bat maternity colonies present?", d.batColoniesPresent)}
+            <p><strong>If roost(s) present, then for each roost site identified:</strong></p>
+            ${roostSitesHtml}
+          `)}
+
+          ${sectionPage(`
+            <h2>Nest Findings</h2>
+            <p><strong>Project’s active nesting bird season:</strong> February 1st – August 31st</p>
+            ${yesNoLine("Were any bird nests observed on or near site?", d.birdNestsObserved)}
+            ${yesNoLine("Were nesting behaviors observed on or near site?", d.nestBehaviorsObserved)}
+            ${yesNoLine("Were any active native bird nests observed on or near site?", d.activeNativeNestsObserved)}
+            <p><strong>If yes, then for each nest or nest colony identified:</strong></p>
+            ${nestFindingsHtml}
+            ${d.nestAdditionalNotes ? `<p><strong>Additional Bio-monitor Notes:</strong></p>${bulletOrParagraphBlocks(d.nestAdditionalNotes)}` : ''}
+          `)}
+
+          ${sectionPage(`
+            <h2>Nest Removals</h2>
+            ${yesNoLine("Were any nests removed?", d.nestsRemoved)}
+            <p><strong>If yes, then for each nest removed:</strong></p>
+            ${nestRemovalsHtml}
+          `)}
+
+          ${sectionPage(`
+            <h2>Wetlands and Jurisdictional Waters</h2>
+            ${yesNoLine("Were wetlands or jurisdictional (state or federal) waters present on or near site?", d.wetlandsPresent)}
+            <p><strong>If yes, then:</strong></p>
+            ${line("Water Body Name(s):", d.waterBodyNames)}
+            ${line("Name of Watershed:", d.watershedName)}
+            ${yesNoLine("Were wetlands or jurisdictional waters impacted by project work activity?", d.wetlandsImpacted)}
+            ${yesNoLine("Did any impacts occur outside of the scope of the designed project work activity?", d.wetlandsOutsideScope)}
+            ${line("What type of impact(s) occurred (if applicable)?", d.wetlandsImpactType)}
+            <p><strong>Bio-monitor Notes:</strong></p>
+            ${bulletOrParagraphBlocks(d.wetlandsNotes)}
+          `)}
+
+          ${sectionPage(`
+            <h2>Vegetation Impacts</h2>
+            ${yesNoLine("Was vegetation impacted by project work activity?", d.vegetationImpacted)}
+            ${yesNoLine("Did any impacts occur outside of the scope of the designed project work activity?", d.vegetationOutsideScope)}
+            <p><strong>If vegetation was impacted, then for each area impacted:</strong></p>
+            ${vegetationEntriesHtml}
+          `)}
+
+          ${sectionPage(`
+            <h2>Non-Special Status Species</h2>
+            ${line("Birds:", d.birds)}
+            ${line("Fish:", d.fish)}
+            ${line("Herpetofauna:", d.herpetofauna)}
+            ${line("Large Invertebrates:", d.largeInvertebrates)}
+            ${line("Mammals:", d.mammals)}
+            <p><strong>Bio-monitor Notes:</strong></p>
+            ${bulletOrParagraphBlocks(d.nonSpecialNotes)}
+          `)}
+
+          ${renderPhotoGroupsForExport(photoGroups)}
+        </div>
+        ${forWord ? '</body></html>' : ''}
+      `;
+
+      return html;
+    }
+
+    async function exportWord(){
+      updateDayFromDate();
+      const html = await buildReportHtml(true);
+      const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+      const a = document.createElement("a");
+      const datePart = $("reportDate").value || "report";
+      a.href = URL.createObjectURL(blob);
+      a.download = `Daily Biomonitoring Report ${datePart}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    async function exportPdf(){
+      updateDayFromDate();
+      $("printContainer").innerHTML = await buildReportHtml(false);
+      setTimeout(() => window.print(), 150);
+    }
+
+    async function checkForUpdates(){
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+          await reg.update();
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: "CLEAR_CACHES" });
+          }
+        }
+      }
+      alert("Update check complete. Reloading latest version.");
+      location.reload();
+    }
+
+    function attachEvents(){
+      $("reportDate").addEventListener("change", updateDayFromDate);
+      $("projectNameNumber").addEventListener("change", applyProjectAutofill);
+      $("projectNameNumber").addEventListener("blur", applyProjectAutofill);
+
+      normalizeTypedTimeField("bioStartTime");
+      normalizeTypedTimeField("bioEndTime");
+      normalizeTypedTimeField("constructionStartTime");
+      normalizeTypedTimeField("constructionEndTime");
+
+      $("saveDraftBtn").addEventListener("click", saveDraft);
+      $("loadDraftBtn").addEventListener("click", loadDraft);
+      $("clearDraftBtn").addEventListener("click", clearDraft);
+      $("exportWordBtn").addEventListener("click", exportWord);
+      $("exportPdfBtn").addEventListener("click", exportPdf);
+      $("updateAppBtn").addEventListener("click", checkForUpdates);
+      $("addPhotoGroupBtn").addEventListener("click", () => addPhotoGroup());
+
+      document.querySelectorAll("[data-add]").forEach(btn => {
+        btn.addEventListener("click", () => addRepeatItem(btn.dataset.add));
+      });
+
+      $("photoUpload").addEventListener("change", (e) => {
+        Array.from(e.target.files || []).forEach(addPhotoFromFile);
+        e.target.value = "";
+      });
+
+      window.addEventListener("online", updateSyncBadge);
+      window.addEventListener("offline", updateSyncBadge);
+    }
+
+    async function registerSW(){
+      if (!("serviceWorker" in navigator)) return;
+      try {
+        await navigator.serviceWorker.register("./sw.js");
+      } catch (err) {
+        console.error("Service worker registration failed", err);
+      }
+    }
+
+    function init(){
+      fillProjectDatalist();
+      attachEvents();
+      updateSyncBadge();
+      Object.keys(repeatSchemas).forEach(key => renderRepeatList(key));
+      renderPhotoGroups();
+      registerSW();
+
+      const existing = localStorage.getItem(STORAGE_KEY);
+      if (existing) {
+        try { applyFormData(JSON.parse(existing)); } catch (e) { console.warn(e); }
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
