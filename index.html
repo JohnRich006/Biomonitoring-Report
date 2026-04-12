@@ -1946,6 +1946,21 @@
       }
     }
 
+    function exportJSON(){
+  const data = getFormData();
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json"
+  });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "biomonitor_report.json";
+  a.click();
+}
+
+document.getElementById("exportJsonBtn").addEventListener("click", exportJSON);
+    
     function init(){
       fillProjectDatalist();
       attachEvents();
@@ -1966,19 +1981,3 @@
 </html>
 
 <button id="exportJsonBtn">Export JSON</button>
-
-function exportJSON(){
-  const data = getFormData();
-
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json"
-  });
-
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "biomonitor_report.json";
-  a.click();
-}
-
-document.getElementById("exportJsonBtn").addEventListener("click", exportJSON);
-
